@@ -1,33 +1,31 @@
 import React from "react";
-import { ImageBackground, StyleSheet, Text } from "react-native";
+import { ImageBackground, StyleSheet, View } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 
-const App = () => (
-  <SafeAreaProvider>
-    <SafeAreaView edges={["left", "right"]}>
+export default function HomeScreen() {
+  return (
+    <SafeAreaProvider>
       <ImageBackground
         source={require("../assets/images/cork_board.png")}
+        style={styles.backgroundImage}
         resizeMode="cover"
-        style={styles.background}
       ></ImageBackground>
-    </SafeAreaView>
-  </SafeAreaProvider>
-);
+      <SafeAreaView edges={["left", "right"]}>
+        <View style={styles.contentContainer}></View>
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+}
 
 const styles = StyleSheet.create({
-  background: {
-    resizeMode: "cover",
+  backgroundImage: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  contentContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  text: {
-    color: "white",
-    fontSize: 42,
-    lineHeight: 84,
-    fontWeight: "bold",
-    textAlign: "center",
-    backgroundColor: "#000000c0",
-  },
 });
-
-export default App;
