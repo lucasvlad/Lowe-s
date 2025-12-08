@@ -2,10 +2,10 @@ import { Platform } from "react-native";
 
 export const Colors = {
   dark: {
-    text: "000000",
-    search_text: "F4F4F4",
-    background: "F4F4F4",
-    search_background_pt_2: "B8B8B8",
+    text: "#000000",
+    search_text: "#F4F4F4",
+    background: "#F4F4F4",
+    search_background_pt_2: "#B8B8B8",
   },
 };
 
