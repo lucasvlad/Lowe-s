@@ -1,6 +1,7 @@
 import React from "react";
 import { ImageBackground, StyleSheet, View } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { SearchBar } from "@/components/search_bar";
 
 export default function HomeScreen() {
   return (
@@ -11,7 +12,9 @@ export default function HomeScreen() {
         resizeMode="cover"
       ></ImageBackground>
       <SafeAreaView edges={["left", "right"]}>
-        <View style={styles.contentContainer}></View>
+        <View style={styles.contentContainer}>
+          <SearchBar />
+        </View>
       </SafeAreaView>
     </SafeAreaProvider>
   );
