@@ -43,21 +43,21 @@ that'll easily get messed up as the element size changes.
 
 add in a min width & height so that at least two can fit next to each other comfortably
 on a mobile view, and add in a max width & height so that it doesn't get so insanely
-large as the responsiveness scales up as diplay size increases.
+large as the responsiveness scales up as diplay size increases.;
 */
 
 const styles = StyleSheet.create({
   itemContainer: {
     backgroundColor: Colors.dark.background,
-    width: 330,
-    height: 400,
+    width: 310,
+    height: 390,
     padding: 10,
     borderRadius: 5,
     margin: 10,
   },
   imageContainer: {
-    width: 300,
-    height: 300,
+    width: 280,
+    height: 280,
     overflow: "hidden",
     marginTop: 5,
     marginBottom: 8,
