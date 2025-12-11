@@ -24,7 +24,7 @@ import { Colors } from "@/constants/theme";
 
 export function Listing(/*{ children, onPress }: ListingProps */) {
   return (
-    <Pressable style={[styles.itemContainer]}>
+    <Pressable style={styles.itemContainer}>
       <View style={styles.imageContainer}>
         <Image
           source={require("../assets/images/favicon.png")}
@@ -49,20 +49,20 @@ large as the responsiveness scales up as diplay size increases.;
 const styles = StyleSheet.create({
   itemContainer: {
     backgroundColor: Colors.dark.background,
-    width: 310,
-    height: 390,
+    width: 186,
+    height: 234,
     padding: 10,
+    paddingTop: 12,
     borderRadius: 5,
-    margin: 10,
   },
   imageContainer: {
-    width: 280,
-    height: 280,
+    width: 169,
+    height: 169,
     overflow: "hidden",
-    marginTop: 5,
-    marginBottom: 8,
-    margin: "auto",
     borderRadius: 2,
+    margin: "auto",
+    marginTop: 0,
+    marginBottom: 0,
   },
   itemImage: {
     width: "100%",
@@ -71,16 +71,17 @@ const styles = StyleSheet.create({
   },
   itemPrice: {
     color: Colors.dark.text,
-    fontSize: 22,
+    fontSize: 16,
     textAlign: "left",
     fontWeight: "bold",
-    marginBottom: 8,
-    marginLeft: 5,
+    paddingLeft: 2,
+    paddingTop: 5,
   },
   itemTitle: {
     color: Colors.dark.text,
-    fontSize: 18,
+    fontSize: 14,
     textAlign: "left",
-    marginLeft: 5,
+    paddingLeft: 2,
+    paddingTop: 5,
   },
 });
