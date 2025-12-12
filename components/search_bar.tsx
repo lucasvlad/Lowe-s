@@ -9,7 +9,8 @@ export const SearchBar = () => {
             <View style={styles.searchEntryContainer}>
                 <TextInput 
                     style={styles.textInput} 
-                    placeholder="🔍  Search for your jawns here!" 
+                    placeholder="🔍  Search for your jawns here!"
+                    placeholderTextColor={Colors.dark.search_text} 
                     id="search_query"  
                 />
             </View>
@@ -33,7 +34,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     flexDirection: 'row',
     margin: "auto",
-    color: "Colors.dark.search_text",
   },
   textInput: {
     overflow: "hidden",
@@ -42,7 +42,6 @@ const styles = StyleSheet.create({
     paddingLeft: "2%",
     textShadow: "2px 2px #828282ff",
     color: Colors.dark.search_text,
-    
     backgroundColor: Colors.dark.search_background_pt_2,
     borderRadius: 5,
     boxShadow: "inset 2px 2px 5px #212121ff"
