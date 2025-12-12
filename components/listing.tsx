@@ -30,15 +30,41 @@ import { Colors } from "@/constants/theme";
 //  itemPrice: the price of the item from the DB
 //  itemTitle: the title of the item from the DB
 
-// Thumbtack colors
-const THUMBTACK_COLORS = [
-  "#E63946", // Red
-  "#118AB2", // Blue
-  "#8338EC", // Purple
-  "#FFBE0B", // Yellow
-  "#FF006E", // Pink
-  "#90BE6D", // Green
+// Regular thumbtack images
+const REGULAR_THUMBTACKS = [
+  require("../assets/images/thumbtacks/blue.png"),
+  require("../assets/images/thumbtacks/green.png"),
+  require("../assets/images/thumbtacks/pink.png"),
+  require("../assets/images/thumbtacks/purple.png"),
+  require("../assets/images/thumbtacks/red.png"),
+  require("../assets/images/thumbtacks/yellow.png"),
 ];
+
+// Special rare thumbtacks (1 in 300 chance each)
+const SPECIAL_THUMBTACKS = [
+  require("../assets/images/thumbtacks/rainbow.png"),
+  require("../assets/images/thumbtacks/doge.png"),
+];
+
+// Function to select a random thumbtack
+const getRandomThumbtack = () => {
+  const rareChance = Math.random();
+
+  // 1 in 300 chance for rainbow
+  if (rareChance < 1 / 300) {
+    return SPECIAL_THUMBTACKS[0]; // rainbow
+  }
+
+  // 1 in 300 chance for doge
+  if (rareChance < 2 / 300) {
+    return SPECIAL_THUMBTACKS[1]; // doge
+  }
+
+  // Otherwise, pick a random regular thumbtack
+  return REGULAR_THUMBTACKS[
+    Math.floor(Math.random() * REGULAR_THUMBTACKS.length)
+  ];
+};
 
 // Calculate columns based on ideal item width
 const getColumns = (screenWidth: number, gap: number): number => {
@@ -78,12 +104,11 @@ export function Listing(/*{ children, onPress }: ListingProps */) {
   // Scale font sizes slightly for larger screens
   const fontScale = screenWidth >= 1024 ? 1.1 : 1;
 
-  // Generate random rotation and color once per component instance
-  const { rotation, color } = useMemo(() => {
+  // Generate random rotation and thumbtack once per component instance
+  const { rotation, thumbtackImage } = useMemo(() => {
     const rotation = Math.random() * 60 - 30; // Random rotation between -30 and 30 degrees
-    const color =
-      THUMBTACK_COLORS[Math.floor(Math.random() * THUMBTACK_COLORS.length)];
-    return { rotation, color };
+    const thumbtackImage = getRandomThumbtack();
+    return { rotation, thumbtackImage };
   }, []);
 
   // Calculate thumbtack size and positioning based on item width
@@ -93,7 +118,7 @@ export function Listing(/*{ children, onPress }: ListingProps */) {
   return (
     <View style={[styles.listingContainer, { paddingTop: thumbtackOffset }]}>
       <Image
-        source={require("../assets/images/thumbtack.png")}
+        source={thumbtackImage}
         style={[
           styles.thumbtack,
           {
@@ -102,7 +127,6 @@ export function Listing(/*{ children, onPress }: ListingProps */) {
             top: -thumbtackOffset,
             marginLeft: -thumbtackSize / 2, // Center horizontally
             transform: [{ rotate: `${rotation}deg` }],
-            tintColor: color,
           },
         ]}
       />
