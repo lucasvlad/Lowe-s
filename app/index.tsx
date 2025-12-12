@@ -6,28 +6,31 @@ import { SearchBar } from "@/components/search_bar";
 export default function HomeScreen() {
   return (
     <SafeAreaProvider>
-      <ImageBackground
+      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+        <ImageBackground
         source={require("../assets/images/cork_board.png")}
         style={styles.backgroundImage}
         resizeMode="cover"
-      ></ImageBackground>
-      <SafeAreaView edges={["left", "right"]}>
-        <View style={styles.contentContainer}>
-          <SearchBar />
-        </View>
+        >
+          <View style={styles.contentContainer}>
+            <SearchBar />
+          </View>
+        </ImageBackground>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    height: "100%",
+  },
   backgroundImage: {
-    flex: 1,
     width: "100%",
     height: "100%",
   },
   contentContainer: {
-    flex: 1,
+    paddingTop: 20,
     justifyContent: "center",
     alignItems: "center",
   },

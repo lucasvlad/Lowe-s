@@ -1,16 +1,17 @@
 // component for searching products
 
-import { Pressable, Text, Image, StyleSheet, View } from "react-native";
+import { StyleSheet, View, TextInput } from "react-native";
 import { Colors } from "@/constants/theme";
 
 export const SearchBar = () => {
     return (
         <View style={styles.searchContainer}>
             <View style={styles.searchEntryContainer}>
-            <form>
-                <input type="text" id="search_query" name="search_query" placeholder="What are you looking for?"/>
-                <input type="button" id="search_button" name="seach_button" />
-            </form>
+                <TextInput 
+                    style={styles.textInput} 
+                    placeholder="   🔍  Search for your jawns here!" 
+                    id="search_query"  
+                />
             </View>
         </View>
     )
@@ -19,20 +20,24 @@ export const SearchBar = () => {
 const styles = StyleSheet.create({
   searchContainer: {
     backgroundColor: Colors.dark.background,
-    width: 800,
+    width: "80%",
     height: 40,
-    padding: 10,
     borderRadius: 5,
-    margin: 10,
+    alignContent: 'center',
   },
   searchEntryContainer: {
+    width: "98%",
+    height: "70%",
     backgroundColor: Colors.dark.search_background_pt_2,
     borderRadius: 5,
+    flexDirection: 'row',
+    margin: "auto",
   },
-  input: {
+  textInput: {
+    width: "100%",
+    height: "100%",
+    color: Colors.dark.search_text,
     backgroundColor: Colors.dark.search_background_pt_2,
-  },
-  button: {
-    backgroundColor: Colors.dark.background,
+    borderRadius: 5,
   },
 });
