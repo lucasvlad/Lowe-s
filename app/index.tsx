@@ -63,6 +63,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   listingsContainer: {
+    paddingTop: 40,
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
