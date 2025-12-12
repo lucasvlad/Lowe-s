@@ -5,6 +5,7 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import { useMemo } from "react";
 import { Colors } from "@/constants/theme";
@@ -50,14 +51,11 @@ const SPECIAL_THUMBTACKS = [
 const getRandomThumbtack = () => {
   const rareChance = Math.random();
 
-  // 1 in 300 chance for rainbow
+  // 1 in 300 chance for random special thumbtacks
   if (rareChance < 1 / 300) {
-    return SPECIAL_THUMBTACKS[0]; // rainbow
-  }
-
-  // 1 in 300 chance for doge
-  if (rareChance < 2 / 300) {
-    return SPECIAL_THUMBTACKS[1]; // doge
+    return SPECIAL_THUMBTACKS[
+      Math.floor(Math.random() * SPECIAL_THUMBTACKS.length)
+    ];
   }
 
   // Otherwise, pick a random regular thumbtack
@@ -157,6 +155,7 @@ const styles = StyleSheet.create({
     left: "50%",
     zIndex: 10,
     resizeMode: "contain",
+    filter: "drop-shadow(2px 6px 6px #212121ff)",
   },
   itemContainer: {
     backgroundColor: Colors.dark.background,
@@ -164,6 +163,7 @@ const styles = StyleSheet.create({
     padding: 10,
     paddingTop: 12,
     borderRadius: 5,
+    filter: "drop-shadow(2px 6px 6px #212121ff)",
   },
   imageContainer: {
     flex: 1,
