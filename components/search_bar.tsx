@@ -40,10 +40,10 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     paddingLeft: "2%",
-    textShadow: "2px 2px #828282ff",
     color: Colors.dark.search_text,
     backgroundColor: Colors.dark.search_background_pt_2,
     borderRadius: 5,
-    boxShadow: "inset 2px 2px 5px #212121ff"
+    boxShadow: "inset 2px 2px 5px #212121ff",
+    textShadow: "2px 2px #828282ff",
   },
 });
