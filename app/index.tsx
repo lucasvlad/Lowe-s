@@ -2,6 +2,7 @@ import React from "react";
 import { ImageBackground, StyleSheet, View } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { SearchBar } from "@/components/search_bar";
+import { Listing } from "@/components/listing";
 
 export default function HomeScreen() {
   return (
