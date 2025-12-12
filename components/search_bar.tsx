@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
   textInput: {
     width: "100%",
     height: "100%",
+    
     color: Colors.dark.search_text,
     backgroundColor: Colors.dark.search_background_pt_2,
     borderRadius: 5,
