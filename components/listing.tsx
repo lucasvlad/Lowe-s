@@ -6,6 +6,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
+import { useMemo } from "react";
 import { Colors } from "@/constants/theme";
 
 // interface ListingProps {
@@ -28,6 +29,16 @@ import { Colors } from "@/constants/theme";
 //  itemImage: the image of the item from the DB
 //  itemPrice: the price of the item from the DB
 //  itemTitle: the title of the item from the DB
+
+// Thumbtack colors
+const THUMBTACK_COLORS = [
+  "#E63946", // Red
+  "#118AB2", // Blue
+  "#8338EC", // Purple
+  "#FFBE0B", // Yellow
+  "#FF006E", // Pink
+  "#90BE6D", // Green
+];
 
 // Calculate columns based on ideal item width
 const getColumns = (screenWidth: number, gap: number): number => {
@@ -53,6 +64,7 @@ const getColumns = (screenWidth: number, gap: number): number => {
 
   return columns;
 };
+
 export function Listing(/*{ children, onPress }: ListingProps */) {
   const { width: screenWidth } = useWindowDimensions();
   const gap = screenWidth >= 1024 ? 30 : screenWidth >= 640 ? 24 : 16;
@@ -66,25 +78,62 @@ export function Listing(/*{ children, onPress }: ListingProps */) {
   // Scale font sizes slightly for larger screens
   const fontScale = screenWidth >= 1024 ? 1.1 : 1;
 
+  // Generate random rotation and color once per component instance
+  const { rotation, color } = useMemo(() => {
+    const rotation = Math.random() * 60 - 30; // Random rotation between -30 and 30 degrees
+    const color =
+      THUMBTACK_COLORS[Math.floor(Math.random() * THUMBTACK_COLORS.length)];
+    return { rotation, color };
+  }, []);
+
+  // Calculate thumbtack size and positioning based on item width
+  const thumbtackSize = itemWidth * 0.25; // 20% of item width
+  const thumbtackOffset = thumbtackSize * 0.25; // Offset from top
+
   return (
-    <Pressable style={[styles.itemContainer, { width: itemWidth }]}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={require("../assets/images/favicon.png")}
-          style={styles.itemImage}
-        />
-      </View>
-      <Text style={[styles.itemPrice, { fontSize: 16 * fontScale }]}>
-        $1,000,000
-      </Text>
-      <Text style={[styles.itemTitle, { fontSize: 14 * fontScale }]}>
-        CHOW SUPP READING
-      </Text>
-    </Pressable>
+    <View style={[styles.listingContainer, { paddingTop: thumbtackOffset }]}>
+      <Image
+        source={require("../assets/images/thumbtack.png")}
+        style={[
+          styles.thumbtack,
+          {
+            width: thumbtackSize,
+            height: thumbtackSize,
+            top: -thumbtackOffset,
+            marginLeft: -thumbtackSize / 2, // Center horizontally
+            transform: [{ rotate: `${rotation}deg` }],
+            tintColor: color,
+          },
+        ]}
+      />
+      <Pressable style={[styles.itemContainer, { width: itemWidth }]}>
+        <View style={styles.imageContainer}>
+          <Image
+            source={require("../assets/images/favicon.png")}
+            style={styles.itemImage}
+          />
+        </View>
+        <Text style={[styles.itemPrice, { fontSize: 16 * fontScale }]}>
+          $1,000,000
+        </Text>
+        <Text style={[styles.itemTitle, { fontSize: 14 * fontScale }]}>
+          CHOW SUPP READING
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  listingContainer: {
+    position: "relative",
+  },
+  thumbtack: {
+    position: "absolute",
+    left: "50%",
+    zIndex: 10,
+    resizeMode: "contain",
+  },
   itemContainer: {
     backgroundColor: Colors.dark.background,
     aspectRatio: 186 / 234,
