@@ -30,6 +30,9 @@ import { Colors } from "@/constants/theme";
 //  itemImage: the image of the item from the DB
 //  itemPrice: the price of the item from the DB
 //  itemTitle: the title of the item from the DB
+//
+//
+// spread them out more
 
 // Regular thumbtack images
 const REGULAR_THUMBTACKS = [
