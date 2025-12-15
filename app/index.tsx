@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import {
   ImageBackground,
   StyleSheet,
@@ -9,14 +9,21 @@ import {
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { SearchBar } from "@/components/search_bar";
 import { Listing } from "@/components/listing";
+import Logo from "@/components/logo";
 
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
+  const logoRef = useRef<any>(null);
 
   // Scale gap from 16 on mobile to 30 on desktop
   const gap = screenWidth >= 1024 ? 30 : screenWidth >= 640 ? 24 : 15;
 
   const listings = Array.from({ length: 500 }, (_, i) => i);
+
+  const handleScroll = (event: any) => {
+    const scrollOffset = event.nativeEvent.contentOffset.y;
+    logoRef.current?.triggerBounce(scrollOffset);
+  };
 
   return (
     <SafeAreaProvider>
@@ -26,8 +33,13 @@ export default function HomeScreen() {
         resizeMode="cover"
       >
         <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
             <View style={styles.contentContainer}>
+              <Logo />
               <SearchBar />
               <View style={[styles.listingsContainer, { gap }]}>
                 {listings.map((_, index) => (
