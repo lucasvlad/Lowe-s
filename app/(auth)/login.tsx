@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link } from "expo-router";
 import { useFonts } from "expo-font";
+import { SvgBorder } from "@/components/login_field_border";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -23,6 +23,17 @@ export default function LoginScreen() {
   const [fontsLoaded] = useFonts({
     PencilFont: require("../../assets/fonts/pencil_type_beat.ttf"),
   });
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const style = document.createElement("style");
+      style.textContent = `input:focus { outline: none !important; }`;
+      document.head.appendChild(style);
+      return () => {
+        document.head.removeChild(style);
+      };
+    }
+  }, []);
 
   if (!fontsLoaded) {
     return null;
@@ -36,7 +47,7 @@ export default function LoginScreen() {
 
     try {
       await signIn(email);
-    } catch (error) {
+    } catch {
       Alert.alert("Login Failed", "Invalid email or password");
     }
   };
@@ -58,29 +69,33 @@ export default function LoginScreen() {
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your Covenant email"
-                placeholderTextColor="#000"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                editable={!isLoading}
-              />
+              <SvgBorder style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your Covenant email"
+                  placeholderTextColor="#000"
+                  value={email}
+                  onChangeText={setEmail}
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                  editable={!isLoading}
+                  selectionColor="#000"
+                />
+              </SvgBorder>
             </View>
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
-            <View style={styles.signupContainer}></View>
+            <SvgBorder style={styles.buttonWrapper}>
+              <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handleLogin}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#000" />
+                ) : (
+                  <Text style={styles.buttonText}>Sign In</Text>
+                )}
+              </TouchableOpacity>
+            </SvgBorder>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -128,49 +143,43 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 26,
     color: "#000",
-    marginBottom: 8,
+    marginBottom: 4,
     fontFamily: "PencilFont",
+    paddingLeft: 15, // container padding already aligns this with the box edge
+  },
+  inputWrapper: {
+    height: 58, // fixed height — border SVG scales to fill this
   },
   input: {
-    borderWidth: 2,
-    borderColor: "#666",
-    borderRadius: 12,
-    padding: 15,
+    flex: 1, // fill the content area of SvgBorder
     fontSize: 20,
     color: "#000",
+    paddingHorizontal: 0,
     fontFamily: "PencilFont",
   },
-  button: {
-    padding: 16,
-    alignItems: "center",
+  buttonWrapper: {
     marginTop: 10,
-    borderWidth: 2,
-    borderColor: "#666",
-    borderRadius: 12,
+    height: 58,
     maxWidth: 150,
     alignSelf: "center",
     width: "100%",
   },
-  buttonDisabled: {
-    backgroundColor: "#999",
+  button: {
+    flex: 1, // fill the content area of SvgBorder
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     color: "#000",
     fontSize: 24,
     fontFamily: "PencilFont",
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   signupContainer: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 20,
-  },
-  signupText: {
-    color: "#666",
-    fontSize: 16,
-  },
-  signupLink: {
-    color: "#0066cc",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });
