@@ -1,40 +1,58 @@
 # Authentication Setup Guide
 
-## Overview
-This project now has a complete authentication flow with protected routes. The authentication uses secure storage and prevents unauthorized access to protected screens.
+How auth is wired in Lowe-s, and how to configure the Supabase backend.
+
+## Flow
+
+Lowe-s uses **passwordless email OTP** (one-time 6-digit codes), restricted to
+Covenant College emails.
+
+1. **Login** (`app/(auth)/login.tsx`) — the user enters their `@covenant.edu`
+   email and we request a one-time code.
+2. **Verify** (`app/(auth)/verify.tsx`) — the user enters the 6-digit code from
+   their inbox; on success a session is created and they land in `(tabs)`.
+
+> **Status:** the flow is currently **mocked** in `contexts/AuthContext.tsx`
+> (any 6-digit code is accepted). Wiring it to real Supabase OTP + enforcing the
+> `@covenant.edu` domain is the next step — see `docs/PROJECT_PLAN.md` (M1 / PR B).
 
 ## Structure
 
-### Contexts
-- `contexts/AuthContext.tsx` - Global authentication state management
+- `contexts/AuthContext.tsx` — global auth state (`requestCode`, `verifyCode`, `signOut`).
+- `app/(auth)/` — public routes (`login`, `verify`); redirects to `(tabs)` if already signed in.
+- `app/(tabs)/` — protected routes (the cork-board home); redirects to `(auth)/login` if not.
+- `app/_layout.tsx` — wraps the app in `AuthProvider` + a navigation guard.
+- `utils/supabase.ts` — Supabase client (persists the session via SecureStore on
+  native / localStorage on web).
 
-### Routes
-- `app/(auth)/` - Public authentication routes (login, signup)
-- `app/(tabs)/` - Protected routes (home and other app screens)
-- `app/_layout.tsx` - Root layout with navigation guard
+## Configuring Supabase
 
-### Utils
-- `utils/supabase.ts` - Supabase client configuration (to be configured)
+1. Create a project at [supabase.com](https://supabase.com/dashboard).
+2. Enable email OTP: **Authentication → Providers → Email**, and turn on
+   "Email OTP" (a numeric code) rather than magic links.
+3. Grab your API credentials: **Project Settings → API** → Project URL and the
+   `anon` `public` key.
+4. In the repo root, copy the example env file and fill it in:
+   ```bash
+   cp .env.example .env
+   ```
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+   ```
+5. Restart the dev server so the new env vars are picked up:
+   ```bash
+   npx expo start -c
+   ```
 
-## How It Works
+`.env` is gitignored. The `anon` key is safe in the client (Row-Level Security
+protects data); never put the `service_role` key in the client or in `.env`.
 
-1. **Initial Load**: The app checks for stored authentication tokens in SecureStore
-2. **Navigation Guard**: The root layout redirects users based on authentication state
-3. **Protected Routes**: All routes under `(tabs)` require authentication
-4. **Public Routes**: Routes under `(auth)` are only accessible when not authenticated
+## Restricting sign-in to Covenant emails
 
-## Security Features
+Enforced in two places (PR B):
 
-✅ Tokens stored in SecureStore (encrypted on device)
-✅ Protected routes redirect to login if not authenticated
-✅ Auth state managed in React context (can't be bypassed client-side)
-✅ Backend validation ready (when you implement Supabase)
-
-## Next Steps
-
-### 1. Configure Supabase (When Ready)
-
-Update `utils/supabase.ts` with your Supabase credentials:
-```typescript
-const SUPABASE_URL = 'your-project-url';
-const SUPABASE_ANON_KEY = 'your-anon-key';
+- **Client:** `login.tsx` rejects any address that isn't `@covenant.edu` before
+  requesting a code.
+- **Server:** a Supabase Auth hook / allowed-domain check, so the restriction
+  can't be bypassed by calling the API directly.

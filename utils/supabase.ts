@@ -2,11 +2,23 @@ import { createClient } from "@supabase/supabase-js";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-// TODO: Replace with your actual Supabase URL and anon key
-const SUPABASE_URL = "YOUR_SUPABASE_URL";
-const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+// Config comes from env. `EXPO_PUBLIC_`-prefixed vars are inlined into the
+// client bundle at build time by the Expo CLI (which auto-loads `.env`).
+// The anon/public key is safe to ship in a client app — Row-Level Security is
+// what protects the data. Copy `.env.example` to `.env` and fill these in
+// (see docs/AUTH_SETUP.md).
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// Custom storage implementation for Supabase
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error(
+    "Missing Supabase configuration. Copy .env.example to .env and set " +
+      "EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.",
+  );
+}
+
+// Persist the auth session in SecureStore on native (encrypted on-device) and
+// localStorage on web.
 const SecureStoreAdapter = {
   getItem: async (key: string) => {
     if (Platform.OS === "web") {
