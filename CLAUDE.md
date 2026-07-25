@@ -8,9 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Built with Expo / React Native, it targets iOS, Android, and web from one codebase. The UI theme is a
 physical **cork board**: listings are cards "pinned" with randomized thumbtacks.
 
-For direction and current status, read `PROJECT_SCOPE.md` (purpose + state) and `PROJECT_PLAN.md`
-(roadmap, decisions, and the proposed Supabase data model). These are the source of truth for what's
-decided vs. still open.
+For direction and current status, read `docs/PROJECT_SCOPE.md` (purpose + state) and
+`docs/PROJECT_PLAN.md` (roadmap, decisions, and the proposed Supabase data model). Contribution
+conventions live in `docs/CONTRIBUTING.md`. These are the source of truth for what's decided vs.
+still open.
 
 ## Commands
 
@@ -53,7 +54,7 @@ stable across re-renders.
 **Responsive grid.** `components/listing.tsx` computes its own column count and item width from
 `useWindowDimensions()` (`getColumns` targets ~170px items, 2–6 columns). `app/index.tsx` currently
 renders **500 hardcoded placeholder listings inside a `ScrollView`** — this is stand-in data; real
-data should move to a `FlatList`/pagination (see `PROJECT_PLAN.md` M2).
+data should move to a `FlatList`/pagination (see `docs/PROJECT_PLAN.md` M2).
 
 **Theme.** `constants/theme.ts` exports `Colors` and `Fonts`. Note `Colors` only has a `dark` key and
 its values are actually light-colored — the naming is misleading; a proper theming pass is planned.
