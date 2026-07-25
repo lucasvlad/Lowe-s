@@ -1,112 +1,144 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
-import Svg, {
-  ClipPath,
-  Defs,
-  Rect,
-  Polygon,
-  ForeignObject,
-} from "react-native-svg";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  LayoutChangeEvent,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from "react-native";
+import Svg, { Polygon } from "react-native-svg";
 
 interface EraseTransitionProps {
+  /** "erase": wipe the content away. "reveal": wipe a covering layer off. */
   mode: "erase" | "reveal";
+  /** Set true to run the animation once. */
   running: boolean;
   onComplete?: () => void;
   children: React.ReactNode;
-  width: number;
-  height: number;
+  /** Colour of the sweeping "paper" overlay (defaults to the login bg). */
+  backgroundColor?: string;
+  style?: ViewStyle;
 }
 
-// We animate a single value 0→1 that controls how far the diagonal edge has swept.
-// The clip polygon always covers from x=0 to the diagonal edge.
-//
-// The diagonal line goes from (progress - height, 0) to (progress, height)
-// where progress sweeps from 0 to width+height.
-//
-//  erase:  progress 0→(w+h)  clip grows   → content disappears L→R diagonally
-//  reveal: progress (w+h)→0  clip shrinks → content appears    R→L... no wait:
-//
-//  reveal: we want content to APPEAR sweeping top-left to bottom-right too.
-//          So the clip polygon starts as nothing and grows the same direction.
-//          progress goes 0→(w+h) but we use it as the REVEALED region not hidden.
-//
-// In both cases progress 0→(w+h):
-//   erase:  clip = left of diagonal  (content visible where clip is)
-//           starts full, diagonal sweeps right removing content
-//           → actually we want ERASE to go from full clip to empty clip
-//             so erase: progress (w+h)→0
-//   reveal: progress 0→(w+h), clip grows from nothing to full
+const DURATION = 700;
+// Safety margin so the flow always advances even if the animation callback
+// or layout measurement misbehaves on a given platform.
+const FALLBACK_BUFFER = 400;
 
+/**
+ * Sweeps a diagonal "paper" overlay across its children.
+ *
+ * The children always render normally; the animation is an absolutely
+ * positioned SVG overlay on top, so the content is never hidden inside the SVG
+ * (which previously risked a blank screen on platforms without solid
+ * ForeignObject support). `progress` drives the covered region: 0 = nothing
+ * covered (content fully visible), 1 = fully covered.
+ */
 export function EraseTransition({
   mode,
   running,
   onComplete,
   children,
-  width,
-  height,
+  backgroundColor = "#e8dcc8",
+  style,
 }: EraseTransitionProps) {
-  const progress = useRef(
-    new Animated.Value(mode === "erase" ? width + height : 0),
-  ).current;
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  // reveal starts fully covered; erase starts fully visible.
+  const progress = useRef(new Animated.Value(mode === "reveal" ? 1 : 0)).current;
+  const [overlayVisible, setOverlayVisible] = useState(mode === "reveal");
+  const done = useRef(false);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
+    setSize((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height },
+    );
+  };
 
   useEffect(() => {
-    if (!running) return;
+    if (!running || done.current) return;
+
+    setOverlayVisible(true);
+
+    const finish = () => {
+      if (done.current) return;
+      done.current = true;
+      if (mode === "reveal") setOverlayVisible(false);
+      onComplete?.();
+    };
+
+    const fallback = setTimeout(finish, DURATION + FALLBACK_BUFFER);
+
     Animated.timing(progress, {
-      toValue: mode === "erase" ? 0 : width + height,
-      duration: 700,
+      toValue: mode === "erase" ? 1 : 0,
+      duration: DURATION,
       easing: Easing.inOut(Easing.quad),
-      useNativeDriver: false, // ClipPath needs JS-driven animation
-    }).start(() => onComplete?.());
+      useNativeDriver: false, // animating an SVG polygon via a JS listener
+    }).start(() => {
+      clearTimeout(fallback);
+      finish();
+    });
+
+    return () => clearTimeout(fallback);
+    // Intentionally only re-run when `running` flips.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running]);
 
-  // Build the clip polygon points string from the animated progress value.
-  // The visible region is everything to the LEFT of the diagonal sweep line.
-  // Diagonal line: top point = (p, 0), bottom point = (p - height, height)
-  // Clip polygon = top-left corner + top-right(p,0) + bottom-right(p-h,h) + bottom-left
-  const animatedPoints = progress.interpolate({
-    inputRange: [0, width + height],
-    outputRange: [
-      `0,0 0,0 0,${height} 0,${height}`, // nothing visible
-      `0,0 ${width},0 ${width + height},${height} 0,${height}`, // everything visible
-    ],
-  });
+  const { width, height } = size;
 
   return (
-    <View style={{ width, height }}>
-      <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
-        <Defs>
-          <ClipPath id="eraseClip">
-            <AnimatedPolygon animatedPoints={animatedPoints} />
-          </ClipPath>
-        </Defs>
-        <ForeignObject
-          x={0}
-          y={0}
-          width={width}
-          height={height}
-          clipPath="url(#eraseClip)"
-        >
-          <View style={{ width, height }}>{children}</View>
-        </ForeignObject>
-      </Svg>
+    <View style={style} onLayout={onLayout}>
+      {children}
+      {overlayVisible && width > 0 && height > 0 ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <Svg width={width} height={height}>
+            <AnimatedWipe
+              progress={progress}
+              width={width}
+              height={height}
+              color={backgroundColor}
+            />
+          </Svg>
+        </View>
+      ) : null}
     </View>
   );
 }
 
-// react-native-svg doesn't support Animated values on SVG props directly,
-// so we use a workaround: listen to the animated value and update state.
-function AnimatedPolygon({
-  animatedPoints,
+/**
+ * The covered region is everything to the RIGHT of a 45° diagonal sweep line.
+ * react-native-svg can't take an Animated value on `points` directly, so we
+ * listen to the interpolated string and push it into state.
+ */
+function AnimatedWipe({
+  progress,
+  width,
+  height,
+  color,
 }: {
-  animatedPoints: Animated.AnimatedInterpolation<string>;
+  progress: Animated.Value;
+  width: number;
+  height: number;
+  color: string;
 }) {
-  const [points, setPoints] = React.useState("0,0 0,0 0,0 0,0");
+  const span = width + height;
+  const uncovered = `${span},0 ${span},0 ${span},${height} ${width},${height}`;
+  const covered = `0,0 ${span},0 ${span},${height} ${-height},${height}`;
+
+  const pointsAnim = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [uncovered, covered],
+  });
+
+  const [points, setPoints] = useState(uncovered);
 
   useEffect(() => {
-    const id = animatedPoints.addListener(({ value }) => setPoints(value));
-    return () => animatedPoints.removeListener(id);
-  }, [animatedPoints]);
+    const id = pointsAnim.addListener(({ value }) =>
+      setPoints(value as unknown as string),
+    );
+    return () => pointsAnim.removeListener(id);
+  }, [pointsAnim]);
 
-  const { Polygon: SvgPolygon } = require("react-native-svg");
-  return <SvgPolygon points={points} fill="black" />;
+  return <Polygon points={points} fill={color} />;
 }

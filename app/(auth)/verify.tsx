@@ -121,7 +121,9 @@ export default function VerifyScreen() {
               {digits.map((digit, index) => (
                 <View key={index} style={styles.digitWrapper}>
                   <TextInput
-                    ref={(ref) => (inputRefs.current[index] = ref)}
+                    ref={(ref) => {
+                      inputRefs.current[index] = ref;
+                    }}
                     style={styles.digitInput}
                     value={digit}
                     onChangeText={(text) => handleDigitChange(text, index)}
