@@ -5,7 +5,6 @@ import { View, ActivityIndicator, StyleSheet } from "react-native";
 export default function AuthLayout() {
   const { isAuthenticated, isLoading } = useAuth();
 
-  // Show loading spinner while checking auth
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -14,14 +13,14 @@ export default function AuthLayout() {
     );
   }
 
-  // If already authenticated, redirect to main app
   if (isAuthenticated) {
     return <Redirect href="/(tabs)" />;
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, animation: "none" }}>
       <Stack.Screen name="login" />
+      <Stack.Screen name="verify" />
     </Stack>
   );
 }

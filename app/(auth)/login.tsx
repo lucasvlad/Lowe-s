@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,10 +15,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFonts } from "expo-font";
 import { SvgBorder } from "@/components/login_field_border";
+import { EraseTransition } from "@/components/erase_transition";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
-  const { signIn, isLoading } = useAuth();
+  const [erasing, setErasing] = useState(false);
+  const { requestCode, isLoading } = useAuth();
 
   const [fontsLoaded] = useFonts({
     PencilFont: require("../../assets/fonts/pencil_type_beat.ttf"),
@@ -35,21 +37,15 @@ export default function LoginScreen() {
     }
   }, []);
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  if (!fontsLoaded) return null;
 
   const handleLogin = async () => {
     if (!email) {
-      Alert.alert("Error", "Please fill in all fields");
+      Alert.alert("Error", "Please enter your email");
       return;
     }
-
-    try {
-      await signIn(email);
-    } catch {
-      Alert.alert("Login Failed", "Invalid email or password");
-    }
+    setErasing(true);
+    // requestCode fires once the erase animation finishes (via onComplete)
   };
 
   return (
@@ -63,40 +59,57 @@ export default function LoginScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.keyboardView}
         >
-          <Text style={styles.title}>Welcome To</Text>
-          {/* replace this with the lowe's logo */}
-          <Text style={styles.subtitle}>Lowe{`'`}s</Text>
-          <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <SvgBorder style={styles.inputWrapper}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your Covenant email"
-                  placeholderTextColor="#000"
-                  value={email}
-                  onChangeText={setEmail}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  editable={!isLoading}
-                  selectionColor="#000"
-                />
+          {/* EraseTransition wraps ONLY the content, not the background */}
+          <EraseTransition
+            mode="erase"
+            running={erasing}
+            backgroundColor="#e8dcc8" // match your login_background.png colour
+            onComplete={async () => {
+              try {
+                await requestCode(email);
+              } catch {
+                setErasing(false);
+                Alert.alert("Error", "Something went wrong, please try again");
+              }
+            }}
+          >
+            <Text style={styles.title}>Welcome To</Text>
+            <Text style={styles.subtitle}>Lowe{"`"}s</Text>
+            <View style={styles.formContainer}>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email</Text>
+                <SvgBorder style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your Covenant email"
+                    placeholderTextColor="#000"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!isLoading && !erasing}
+                    selectionColor="#000"
+                  />
+                </SvgBorder>
+              </View>
+              <SvgBorder style={styles.buttonWrapper}>
+                <TouchableOpacity
+                  style={[
+                    styles.button,
+                    (isLoading || erasing) && styles.buttonDisabled,
+                  ]}
+                  onPress={handleLogin}
+                  disabled={isLoading || erasing}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#000" />
+                  ) : (
+                    <Text style={styles.buttonText}>Sign In</Text>
+                  )}
+                </TouchableOpacity>
               </SvgBorder>
             </View>
-            <SvgBorder style={styles.buttonWrapper}>
-              <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#000" />
-                ) : (
-                  <Text style={styles.buttonText}>Sign In</Text>
-                )}
-              </TouchableOpacity>
-            </SvgBorder>
-          </View>
+          </EraseTransition>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ImageBackground>
@@ -145,13 +158,13 @@ const styles = StyleSheet.create({
     color: "#000",
     marginBottom: 4,
     fontFamily: "PencilFont",
-    paddingLeft: 15, // container padding already aligns this with the box edge
+    paddingLeft: 15,
   },
   inputWrapper: {
-    height: 58, // fixed height — border SVG scales to fill this
+    height: 58,
   },
   input: {
-    flex: 1, // fill the content area of SvgBorder
+    flex: 1,
     fontSize: 20,
     color: "#000",
     paddingHorizontal: 0,
@@ -165,7 +178,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   button: {
-    flex: 1, // fill the content area of SvgBorder
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
