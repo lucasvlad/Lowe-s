@@ -1,3 +1,46 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
 expo-env.d.ts
-/.expo
+
+# native builds (managed workflow — present only after prebuild)
+/ios
+/android
+
+# metro / bundler
+.metro-health-check*
+
+# logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# environment / secrets
+.env
+.env*.local
+
+# signing / certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# misc
+*.orig.*
+
+# macOS
 .DS_Store
+
+# editor / IDE
+.obsidian/
+.vscode/
+.idea/
+
+# Claude Code (local personal settings — CLAUDE.md itself is committed/shared)
+.claude/
