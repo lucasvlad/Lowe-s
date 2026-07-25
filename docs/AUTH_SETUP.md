@@ -12,9 +12,8 @@ Covenant College emails.
 2. **Verify** (`app/(auth)/verify.tsx`) — the user enters the 6-digit code from
    their inbox; on success a session is created and they land in `(tabs)`.
 
-> **Status:** the flow is currently **mocked** in `contexts/AuthContext.tsx`
-> (any 6-digit code is accepted). Wiring it to real Supabase OTP + enforcing the
-> `@covenant.edu` domain is the next step — see `docs/PROJECT_PLAN.md` (M1 / PR B).
+`contexts/AuthContext.tsx` is wired to real Supabase OTP (`signInWithOtp` /
+`verifyOtp`) and restores sessions via `onAuthStateChange`.
 
 ## Structure
 
@@ -28,31 +27,72 @@ Covenant College emails.
 ## Configuring Supabase
 
 1. Create a project at [supabase.com](https://supabase.com/dashboard).
-2. Enable email OTP: **Authentication → Providers → Email**, and turn on
-   "Email OTP" (a numeric code) rather than magic links.
-3. Grab your API credentials: **Project Settings → API** → Project URL and the
-   `anon` `public` key.
-4. In the repo root, copy the example env file and fill it in:
+2. Enable email OTP: **Authentication → Providers → Email** (enable "Email OTP").
+3. **Make the email send a code, not a magic link.** Go to **Authentication →
+   Email Templates → Magic Link** and ensure the template uses the code token,
+   e.g.:
+   ```
+   Your Lowe-s code is: {{ .Token }}
+   ```
+   If the template only contains `{{ .ConfirmationURL }}`, users get a link
+   instead of the 6-digit code the verify screen expects.
+4. Grab your API credentials: **Project Settings → API** → Project URL and the
+   client-safe key (the **publishable** `sb_publishable_...` key, aka the `anon`
+   key). Never use the `secret` / `service_role` key in the app.
+5. In the repo root, copy the example env file and fill it in:
    ```bash
    cp .env.example .env
    ```
    ```
    EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_your-publishable-key
    ```
-5. Restart the dev server so the new env vars are picked up:
+6. Restart the dev server so the new env vars are picked up:
    ```bash
    npx expo start -c
    ```
 
-`.env` is gitignored. The `anon` key is safe in the client (Row-Level Security
-protects data); never put the `service_role` key in the client or in `.env`.
+`.env` is gitignored. The publishable/`anon` key is safe in the client (Row-Level
+Security protects data); never put the `secret` / `service_role` key in the
+client or in `.env`.
 
 ## Restricting sign-in to Covenant emails
 
-Enforced in two places (PR B):
+Enforced in two places:
 
-- **Client:** `login.tsx` rejects any address that isn't `@covenant.edu` before
-  requesting a code.
-- **Server:** a Supabase Auth hook / allowed-domain check, so the restriction
-  can't be bypassed by calling the API directly.
+- **Client** (done, `login.tsx` + `contexts/AuthContext.tsx`): rejects any
+  address that isn't `@covenant.edu` before requesting a code.
+- **Server** (⚠️ **you must apply this** — the client check alone can be
+  bypassed by calling the Supabase API directly): add a trigger that blocks
+  non-Covenant signups. Run this once in the Supabase **SQL Editor**:
+
+  ```sql
+  create or replace function public.enforce_covenant_email()
+  returns trigger
+  language plpgsql
+  security definer
+  as $$
+  begin
+    if new.email !~* '@covenant\.edu$' then
+      raise exception 'Only @covenant.edu email addresses are allowed';
+    end if;
+    return new;
+  end;
+  $$;
+
+  create trigger enforce_covenant_email
+    before insert on auth.users
+    for each row execute function public.enforce_covenant_email();
+  ```
+
+  With OTP, the user row is created when the code is requested, so a non-Covenant
+  address will fail at that point.
+
+## Session storage caveat (native)
+
+The Supabase session is persisted via `expo-secure-store` on native and
+`localStorage` on web. SecureStore has a ~2048-byte per-value limit, and Supabase
+sessions can exceed it, which logs a warning and may fail to persist on device.
+Web is unaffected. If this bites on iOS/Android, switch the native branch of the
+storage adapter in `utils/supabase.ts` to `@react-native-async-storage/async-storage`
+(already a dependency).
