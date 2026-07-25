@@ -12,7 +12,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  useAuth,
+  isAllowedEmail,
+  ALLOWED_EMAIL_DOMAIN,
+} from "@/contexts/AuthContext";
 import { useFonts } from "expo-font";
 import { SvgBorder } from "@/components/login_field_border";
 import { EraseTransition } from "@/components/erase_transition";
@@ -40,8 +44,15 @@ export default function LoginScreen() {
   if (!fontsLoaded) return null;
 
   const handleLogin = async () => {
-    if (!email) {
+    if (!email.trim()) {
       Alert.alert("Error", "Please enter your email");
+      return;
+    }
+    if (!isAllowedEmail(email)) {
+      Alert.alert(
+        "Covenant email required",
+        `Please sign in with your @${ALLOWED_EMAIL_DOMAIN} email address.`,
+      );
       return;
     }
     setErasing(true);
@@ -67,9 +78,14 @@ export default function LoginScreen() {
             onComplete={async () => {
               try {
                 await requestCode(email);
-              } catch {
+              } catch (err) {
                 setErasing(false);
-                Alert.alert("Error", "Something went wrong, please try again");
+                Alert.alert(
+                  "Couldn't send code",
+                  err instanceof Error
+                    ? err.message
+                    : "Something went wrong, please try again.",
+                );
               }
             }}
           >

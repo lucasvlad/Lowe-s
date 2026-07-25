@@ -1,11 +1,19 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/utils/supabase";
+
+/** Only this email domain may sign in (also enforced server-side). */
+export const ALLOWED_EMAIL_DOMAIN = "covenant.edu";
+
+/** True if `email` belongs to the allowed Covenant domain. */
+export function isAllowedEmail(email: string): boolean {
+  return email.trim().toLowerCase().endsWith(`@${ALLOWED_EMAIL_DOMAIN}`);
+}
 
 export interface User {
   id: string;
   email: string;
-  isNewUser?: boolean;
 }
 
 interface AuthContextType {
@@ -16,96 +24,69 @@ interface AuthContextType {
   requestCode: (email: string) => Promise<void>;
   verifyCode: (code: string) => Promise<void>;
   signOut: () => Promise<void>;
-  initializeAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "auth_token";
-const USER_KEY = "user_data";
+function toUser(session: Session | null): User | null {
+  if (!session?.user?.email) return null;
+  return { id: session.user.id, email: session.user.email };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const initializeAuth = async () => {
-    try {
-      setIsLoading(true);
-      const token = await SecureStore.getItemAsync(TOKEN_KEY);
-      const userData = await SecureStore.getItemAsync(USER_KEY);
-      if (token && userData) {
-        setUser(JSON.parse(userData));
-      } else {
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Error initializing auth:", error);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    initializeAuth();
+    // Restore a persisted session on cold start.
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setUser(toUser(data.session)))
+      .finally(() => setIsLoading(false));
+
+    // Stay in sync with sign-in / sign-out / token refresh.
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(toUser(session));
+    });
+    return () => data.subscription.unsubscribe();
   }, []);
 
-  // Step 1: user submits email — sanitize, send code, navigate to verify screen
+  // Step 1: send a one-time code to a Covenant email, then go to the verify screen.
   const requestCode = async (email: string) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isAllowedEmail(normalizedEmail)) {
+      throw new Error(`Please use your @${ALLOWED_EMAIL_DOMAIN} email address.`);
+    }
     try {
       setIsLoading(true);
-
-      // TODO: sanitize to covenant email domain
-      // if (!email.endsWith("@covenant.edu")) throw new Error("Invalid email domain");
-
-      // TODO: call your backend to send the 2FA code to this email
-
-      setPendingEmail(email);
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+      });
+      if (error) throw error;
+      setPendingEmail(normalizedEmail);
       router.push("/(auth)/verify");
-    } catch (error) {
-      console.error("Request code error:", error);
-      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Step 2: user submits the code from their email
+  // Step 2: verify the 6-digit code; Supabase creates + persists the session.
   const verifyCode = async (code: string) => {
+    if (!pendingEmail) {
+      throw new Error("No pending email — please request a new code.");
+    }
     try {
       setIsLoading(true);
-
-      // TODO: call your backend to verify the code against pendingEmail
-      // For now accept any 6-digit input
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // TODO: determine from backend whether this is a new user
-      const isNewUser = false;
-
-      const mockUser: User = {
-        id: "123",
-        email: pendingEmail!,
-        isNewUser,
-      };
-
-      const mockToken = "mock_token_" + Date.now();
-
-      await SecureStore.setItemAsync(TOKEN_KEY, mockToken);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(mockUser));
-
-      setUser(mockUser);
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token: code.trim(),
+        type: "email",
+      });
+      if (error) throw error;
+      setUser(toUser(data.session));
       setPendingEmail(null);
-
-      if (isNewUser) {
-        // TODO: router.replace("/(auth)/onboarding");
-        router.replace("/(tabs)");
-      } else {
-        router.replace("/(tabs)");
-      }
-    } catch (error) {
-      console.error("Verify code error:", error);
-      throw error;
+      router.replace("/(tabs)");
     } finally {
       setIsLoading(false);
     }
@@ -114,13 +95,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
-      await SecureStore.deleteItemAsync(USER_KEY);
+      await supabase.auth.signOut();
       setUser(null);
+      setPendingEmail(null);
       router.replace("/(auth)/login");
-    } catch (error) {
-      console.error("Sign out error:", error);
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -134,7 +112,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     requestCode,
     verifyCode,
     signOut,
-    initializeAuth,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

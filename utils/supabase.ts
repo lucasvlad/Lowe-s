@@ -19,23 +19,28 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 // Persist the auth session in SecureStore on native (encrypted on-device) and
 // localStorage on web.
+// `localStorage` is undefined during static web prerendering (Node) and in any
+// non-browser context, so guard every web access — there's no session to
+// restore server-side anyway.
+const hasLocalStorage = () => typeof localStorage !== "undefined";
+
 const SecureStoreAdapter = {
   getItem: async (key: string) => {
     if (Platform.OS === "web") {
-      return localStorage.getItem(key);
+      return hasLocalStorage() ? localStorage.getItem(key) : null;
     }
     return SecureStore.getItemAsync(key);
   },
   setItem: async (key: string, value: string) => {
     if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
+      if (hasLocalStorage()) localStorage.setItem(key, value);
       return;
     }
     return SecureStore.setItemAsync(key, value);
   },
   removeItem: async (key: string) => {
     if (Platform.OS === "web") {
-      localStorage.removeItem(key);
+      if (hasLocalStorage()) localStorage.removeItem(key);
       return;
     }
     return SecureStore.deleteItemAsync(key);
