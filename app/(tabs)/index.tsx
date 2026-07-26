@@ -1,89 +1,22 @@
-// import React from "react";
-// import {
-//   ImageBackground,
-//   StyleSheet,
-//   View,
-//   ScrollView,
-//   useWindowDimensions,
-// } from "react-native";
-// import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-// import { SearchBar } from "@/components/search_bar";
-// import { Listing } from "@/components/listing";
-
-// export default function HomeScreen() {
-//   const { width: screenWidth } = useWindowDimensions();
-
-//   // Scale gap from 16 on mobile to 30 on desktop
-//   const gap = screenWidth >= 1024 ? 30 : screenWidth >= 640 ? 24 : 15;
-
-//   const listings = Array.from({ length: 500 }, (_, i) => i);
-
-//   return (
-//     <SafeAreaProvider>
-//       <ImageBackground
-//         source={require("../assets/images/cork_board.png")}
-//         style={styles.backgroundImage}
-//         resizeMode="cover"
-//       >
-//         <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
-//           <ScrollView contentContainerStyle={styles.scrollContent}>
-//             <View style={styles.contentContainer}>
-//               <SearchBar />
-//               <View style={[styles.listingsContainer, { gap }]}>
-//                 {listings.map((_, index) => (
-//                   <Listing key={index} />
-//                 ))}
-//               </View>
-//             </View>
-//           </ScrollView>
-//         </SafeAreaView>
-//       </ImageBackground>
-//     </SafeAreaProvider>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   safeArea: {
-//     height: "100%",
-//     flex: 1,
-//   },
-//   backgroundImage: {
-//     width: "100%",
-//     height: "100%",
-//   },
-//   contentContainer: {
-//     paddingTop: 10,
-//     justifyContent: "center",
-//     alignItems: "center",
-//     flex: 1,
-//     paddingVertical: 20,
-//     paddingHorizontal: 15,
-//   },
-//   scrollContent: {
-//     flexGrow: 1,
-//   },
-//   listingsContainer: {
-//     paddingTop: 40,
-//     flexDirection: "row",
-//     flexWrap: "wrap",
-//     justifyContent: "center",
-//   },
-// });
-
 import React from "react";
 import {
   ImageBackground,
   StyleSheet,
   View,
-  ScrollView,
-  useWindowDimensions,
-  TouchableOpacity,
   Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { SearchBar } from "@/components/search_bar";
-import { Listing } from "@/components/listing";
+import { Listing, getGridLayout } from "@/components/listing";
 import { useAuth } from "@/contexts/AuthContext";
+import { useListings } from "@/hooks/use-listings";
+import type { ListingRecord } from "@/utils/listings";
 
 // Covenant emails are formatted first.last@covenant.edu, so the local part
 // before the first "." is the first name. Capitalize it for the greeting.
@@ -96,11 +29,41 @@ function firstNameFromEmail(email?: string): string {
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { signOut, user } = useAuth();
+  const {
+    listings,
+    isLoading,
+    isLoadingMore,
+    isRefreshing,
+    error,
+    loadMore,
+    refresh,
+  } = useListings();
 
-  // Scale gap from 16 on mobile to 30 on desktop
-  const gap = screenWidth >= 1024 ? 30 : screenWidth >= 640 ? 24 : 15;
+  const { columns, gap, itemWidth } = getGridLayout(screenWidth);
 
-  const listings = Array.from({ length: 500 }, (_, i) => i);
+  const renderItem = ({ item }: { item: ListingRecord }) => (
+    <Listing
+      item={item}
+      width={itemWidth}
+      onPress={() =>
+        router.push({ pathname: "/listing/[id]", params: { id: item.id } })
+      }
+    />
+  );
+
+  const header = (
+    <View style={styles.headerArea}>
+      <View style={styles.header}>
+        <Text style={styles.welcomeText}>
+          Welcome, {firstNameFromEmail(user?.email)}
+        </Text>
+        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+      <SearchBar />
+    </View>
+  );
 
   return (
     <SafeAreaProvider>
@@ -110,26 +73,47 @@ export default function HomeScreen() {
         resizeMode="cover"
       >
         <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            <View style={styles.contentContainer}>
-              {/* Header with user info and logout */}
-              <View style={styles.header}>
-                <Text style={styles.welcomeText}>
-                  Welcome, {firstNameFromEmail(user?.email)}
-                </Text>
-                <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-                  <Text style={styles.logoutText}>Logout</Text>
-                </TouchableOpacity>
-              </View>
-
-              <SearchBar />
-              <View style={[styles.listingsContainer, { gap }]}>
-                {listings.map((_, index) => (
-                  <Listing key={index} />
-                ))}
-              </View>
+          <FlatList
+            key={`cols-${columns}`}
+            style={styles.list}
+            data={listings}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            numColumns={columns}
+            columnWrapperStyle={[styles.column, { gap, marginBottom: gap }]}
+            ListHeaderComponent={header}
+            contentContainerStyle={styles.listContent}
+            onEndReached={loadMore}
+            onEndReachedThreshold={0.4}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refresh}
+                tintColor="#fff"
+              />
+            }
+            ListEmptyComponent={
+              isLoading ? null : (
+                <View style={styles.stateBox}>
+                  <Text style={styles.stateText}>
+                    {error
+                      ? "Couldn't load listings. Pull down to retry."
+                      : "No listings yet. Check back soon!"}
+                  </Text>
+                </View>
+              )
+            }
+            ListFooterComponent={
+              isLoadingMore ? (
+                <ActivityIndicator style={styles.footer} color="#fff" />
+              ) : null
+            }
+          />
+          {isLoading ? (
+            <View style={styles.centerOverlay} pointerEvents="none">
+              <ActivityIndicator size="large" color="#fff" />
             </View>
-          </ScrollView>
+          ) : null}
         </SafeAreaView>
       </ImageBackground>
     </SafeAreaProvider>
@@ -145,22 +129,22 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
-  contentContainer: {
-    paddingTop: 10,
-    justifyContent: "center",
-    alignItems: "center",
+  list: {
     flex: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 15,
+    backgroundColor: "transparent",
   },
-  scrollContent: {
-    flexGrow: 1,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 40,
   },
-  listingsContainer: {
-    paddingTop: 40,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
+  column: {
+    justifyContent: "flex-start",
+  },
+  headerArea: {
+    alignItems: "center",
+    paddingTop: 10,
+    marginBottom: 30,
   },
   header: {
     flexDirection: "row",
@@ -185,5 +169,26 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
     fontSize: 14,
+  },
+  stateBox: {
+    alignItems: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+  },
+  stateText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    textAlign: "center",
+    textShadowColor: "#00000088",
+    textShadowRadius: 4,
+  },
+  footer: {
+    paddingVertical: 24,
+  },
+  centerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

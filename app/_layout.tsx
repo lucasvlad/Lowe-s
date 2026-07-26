@@ -1,5 +1,5 @@
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
-import { Slot, useRouter, useSegments } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
@@ -22,7 +22,8 @@ function NavigationGuard() {
     }
   }, [isAuthenticated, segments, isLoading, router]);
 
-  return <Slot />;
+  // A root Stack lets the listing detail screen push over the (tabs) group.
+  return <Stack screenOptions={{ headerShown: false }} />;
 }
 
 export default function RootLayout() {
