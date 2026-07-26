@@ -44,6 +44,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.dark.search_background_pt_2,
     borderRadius: 5,
     boxShadow: "inset 2px 2px 5px #212121ff",
-    textShadow: "2px 2px #828282ff",
+    textShadowColor: "#828282ff",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 0,
   },
 });
