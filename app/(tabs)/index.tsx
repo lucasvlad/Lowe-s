@@ -85,6 +85,14 @@ import { SearchBar } from "@/components/search_bar";
 import { Listing } from "@/components/listing";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Covenant emails are formatted first.last@covenant.edu, so the local part
+// before the first "." is the first name. Capitalize it for the greeting.
+// (Placeholder greeting — revisit when the home header gets its UI pass.)
+function firstNameFromEmail(email?: string): string {
+  const first = email?.split("@")[0]?.split(".")[0] ?? "";
+  return first ? first.charAt(0).toUpperCase() + first.slice(1) : "there";
+}
+
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { signOut, user } = useAuth();
@@ -106,7 +114,9 @@ export default function HomeScreen() {
             <View style={styles.contentContainer}>
               {/* Header with user info and logout */}
               <View style={styles.header}>
-                <Text style={styles.welcomeText}>Welcome, {user?.email}</Text>
+                <Text style={styles.welcomeText}>
+                  Welcome, {firstNameFromEmail(user?.email)}
+                </Text>
                 <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
                   <Text style={styles.logoutText}>Logout</Text>
                 </TouchableOpacity>
