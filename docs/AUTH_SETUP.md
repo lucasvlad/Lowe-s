@@ -28,14 +28,16 @@ Covenant College emails.
 
 1. Create a project at [supabase.com](https://supabase.com/dashboard).
 2. Enable email OTP: **Authentication → Providers → Email** (enable "Email OTP").
-3. **Make the email send a code, not a magic link.** Go to **Authentication →
-   Email Templates → Magic Link** and ensure the template uses the code token,
-   e.g.:
+3. **Make the emails send a code, not a link.** Supabase picks the template by
+   account state: a **first-time** email hits **"Confirm signup"**, a
+   **returning** email hits **"Magic Link"**. Edit **both** (Authentication →
+   Email Templates) so each uses the code token instead of the confirmation URL:
    ```
    Your Lowe-s code is: {{ .Token }}
    ```
-   If the template only contains `{{ .ConfirmationURL }}`, users get a link
-   instead of the 6-digit code the verify screen expects.
+   If a template only contains `{{ .ConfirmationURL }}`, that user gets a link
+   instead of the 6-digit code the verify screen expects. (Our code verifies the
+   token with `type: "email"`, which covers both new and returning users.)
 4. Grab your API credentials: **Project Settings → API** → Project URL and the
    client-safe key (the **publishable** `sb_publishable_...` key, aka the `anon`
    key). Never use the `secret` / `service_role` key in the app.
