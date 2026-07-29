@@ -1,22 +1,41 @@
 // component for searching products
 
+import { useEffect, useState } from "react";
 import { StyleSheet, View, TextInput } from "react-native";
 import { Colors } from "@/constants/theme";
 
-export const SearchBar = () => {
-    return (
-        <View style={styles.searchContainer}>
-            <View style={styles.searchEntryContainer}>
-                <TextInput 
-                    style={styles.textInput} 
-                    placeholder="🔍  Search for your jawns here!"
-                    placeholderTextColor={Colors.dark.search_text} 
-                    id="search_query"  
-                />
-            </View>
-        </View>
-    )
+const DEBOUNCE_MS = 300;
+
+interface SearchBarProps {
+  /** Called with the trimmed query `DEBOUNCE_MS` after the user stops typing. */
+  onSearch: (query: string) => void;
 }
+
+export const SearchBar = ({ onSearch }: SearchBarProps) => {
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    const timeout = setTimeout(() => onSearch(value.trim()), DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  return (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchEntryContainer}>
+        <TextInput
+          style={styles.textInput}
+          placeholder="🔍  Search for your jawns here!"
+          placeholderTextColor={Colors.dark.search_text}
+          id="search_query"
+          value={value}
+          onChangeText={setValue}
+          returnKeyType="search"
+        />
+      </View>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   searchContainer: {

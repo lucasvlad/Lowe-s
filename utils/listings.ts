@@ -20,15 +20,40 @@ export interface ListingWithSeller extends ListingRecord {
 
 export const LISTINGS_PAGE_SIZE = 20;
 
-/** One page of active listings, newest first. `page` is 0-indexed. */
-export async function fetchListingsPage(page: number): Promise<ListingRecord[]> {
+export interface ListingsFilter {
+  /** Keyword matched against title/description (server-side, case-insensitive). */
+  search?: string;
+  /** Restrict to one category, or omit/null for all categories. */
+  category?: string | null;
+}
+
+// PostgREST's `.or()` filter syntax treats "," and "()" as structural
+// (condition separators / grouping), so strip them out of user input rather
+// than risk a malformed filter or a search that silently matches nothing.
+function sanitizeSearchTerm(term: string): string {
+  return term.replace(/[,()]/g, " ").trim();
+}
+
+/** One page of active listings, newest first, optionally filtered. `page` is 0-indexed. */
+export async function fetchListingsPage(
+  page: number,
+  filter: ListingsFilter = {},
+): Promise<ListingRecord[]> {
   const from = page * LISTINGS_PAGE_SIZE;
   const to = from + LISTINGS_PAGE_SIZE - 1;
 
-  const { data, error } = await supabase
-    .from("listings")
-    .select("*")
-    .eq("status", "active")
+  let query = supabase.from("listings").select("*").eq("status", "active");
+
+  if (filter.category) {
+    query = query.eq("category", filter.category);
+  }
+
+  const term = filter.search ? sanitizeSearchTerm(filter.search) : "";
+  if (term) {
+    query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%`);
+  }
+
+  const { data, error } = await query
     .order("created_at", { ascending: false })
     .range(from, to);
 

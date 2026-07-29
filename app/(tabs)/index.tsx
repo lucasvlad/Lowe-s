@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ImageBackground,
   StyleSheet,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { SearchBar } from "@/components/search_bar";
+import { CategoryFilter } from "@/components/category_filter";
 import { Listing, getGridLayout } from "@/components/listing";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/use-listings";
@@ -29,6 +30,8 @@ function firstNameFromEmail(email?: string): string {
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { signOut, user } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const {
     listings,
     isLoading,
@@ -37,7 +40,7 @@ export default function HomeScreen() {
     error,
     loadMore,
     refresh,
-  } = useListings();
+  } = useListings(searchQuery, selectedCategory);
 
   const { columns, gap, itemWidth } = getGridLayout(screenWidth);
 
@@ -61,9 +64,14 @@ export default function HomeScreen() {
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
-      <SearchBar />
+      <SearchBar onSearch={setSearchQuery} />
+      <View style={styles.categoryFilterRow}>
+        <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
+      </View>
     </View>
   );
+
+  const hasActiveFilter = !!searchQuery || !!selectedCategory;
 
   return (
     <SafeAreaProvider>
@@ -98,7 +106,9 @@ export default function HomeScreen() {
                   <Text style={styles.stateText}>
                     {error
                       ? "Couldn't load listings. Pull down to retry."
-                      : "No listings yet. Check back soon!"}
+                      : hasActiveFilter
+                        ? "No listings match your search."
+                        : "No listings yet. Check back soon!"}
                   </Text>
                 </View>
               )
@@ -158,6 +168,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
+  },
+  categoryFilterRow: {
+    width: "100%",
+    marginTop: 14,
   },
   logoutButton: {
     backgroundColor: "#ff3b30",
