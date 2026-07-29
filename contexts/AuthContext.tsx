@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { router } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
+import { useDesignVariant } from "@/contexts/DesignVariantContext";
 
 /** Only this email domain may sign in (also enforced server-side). */
 export const ALLOWED_EMAIL_DOMAIN = "covenant.edu";
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { markJustSignedIn } = useDesignVariant();
 
   useEffect(() => {
     // Restore a persisted session on cold start.
@@ -86,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(toUser(data.session));
       setPendingEmail(null);
+      markJustSignedIn();
       router.replace("/(tabs)");
     } finally {
       setIsLoading(false);

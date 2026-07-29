@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  ImageBackground,
   ScrollView,
   StyleSheet,
   View,
@@ -19,6 +18,7 @@ import {
   type ListingWithSeller,
 } from "@/utils/listings";
 import { alertMessage } from "@/utils/alert";
+import { Colors, PENCIL_FONT } from "@/constants/theme";
 
 export default function EditListingScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -78,11 +78,7 @@ export default function EditListingScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require("../../../assets/images/cork_board.png")}
-      style={styles.background}
-      resizeMode="cover"
-    >
+    <View style={styles.background}>
       <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backText}>‹ Back</Text>
@@ -90,7 +86,7 @@ export default function EditListingScreen() {
 
         {isLoading ? (
           <View style={styles.center}>
-            <ActivityIndicator size="large" color="#fff" />
+            <ActivityIndicator size="large" color={Colors.accent} />
           </View>
         ) : error || !listing ? (
           <View style={styles.center}>
@@ -120,14 +116,14 @@ export default function EditListingScreen() {
           </ScrollView>
         )}
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
-    width: "100%",
-    height: "100%",
+    flex: 1,
+    backgroundColor: Colors.paper,
   },
   safeArea: {
     flex: 1,
@@ -137,15 +133,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginLeft: 12,
     marginBottom: 4,
-    backgroundColor: "#ffffffcc",
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.ink,
+    backgroundColor: Colors.card,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
   backText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#333",
+    color: Colors.ink,
   },
   center: {
     flex: 1,
@@ -154,23 +151,19 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   stateText: {
-    color: "#fff",
+    color: Colors.ink,
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
   },
   content: {
     padding: 16,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#fff",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
+    fontSize: 26,
+    color: Colors.ink,
     textAlign: "center",
-    marginBottom: 12,
+    marginBottom: 16,
+    fontFamily: PENCIL_FONT,
   },
 });

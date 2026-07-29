@@ -1,8 +1,11 @@
 import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { useFonts } from "expo-font";
 import "react-native-reanimated";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { DesignVariantProvider } from "@/contexts/DesignVariantContext";
+import { PENCIL_FONT } from "@/constants/theme";
 
 // Redirects between the (auth) and (tabs) route groups based on auth state.
 function NavigationGuard() {
@@ -27,11 +30,21 @@ function NavigationGuard() {
 }
 
 export default function RootLayout() {
+  // Loaded once here (rather than per-screen) so every screen's headings can
+  // use it, not just the auth flow.
+  const [fontsLoaded] = useFonts({
+    [PENCIL_FONT]: require("../assets/fonts/pencil_type_beat.ttf"),
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
     <ThemeProvider value={DarkTheme}>
-      <AuthProvider>
-        <NavigationGuard />
-      </AuthProvider>
+      <DesignVariantProvider>
+        <AuthProvider>
+          <NavigationGuard />
+        </AuthProvider>
+      </DesignVariantProvider>
     </ThemeProvider>
   );
 }

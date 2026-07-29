@@ -1,10 +1,10 @@
 import React from "react";
-import { View, StyleSheet, ViewStyle } from "react-native";
+import { View, StyleSheet, StyleProp, ViewStyle } from "react-native";
 import Svg, { Path, G } from "react-native-svg";
 
 interface SvgBorderProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function SvgBorder({ children, style }: SvgBorderProps) {

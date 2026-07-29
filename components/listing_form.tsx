@@ -7,10 +7,11 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Colors } from "@/constants/theme";
+import { Chip } from "@/components/chip";
+import { RetroButton } from "@/components/retro_button";
 import { CATEGORIES, categoryLabel } from "@/constants/categories";
 import { parsePriceToCents } from "@/utils/listings";
 import { alertMessage } from "@/utils/alert";
@@ -138,72 +139,60 @@ export function ListingForm({
         </View>
       </TouchableOpacity>
 
-      <Text style={styles.label}>Title</Text>
+      <Text style={styles.label}>TITLE</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
         placeholder="e.g. Mini fridge"
-        placeholderTextColor="#888"
+        placeholderTextColor={Colors.inkMuted}
         maxLength={120}
       />
 
-      <Text style={styles.label}>Price</Text>
+      <Text style={styles.label}>PRICE</Text>
       <TextInput
         style={styles.input}
         value={price}
         onChangeText={setPrice}
         placeholder="0.00"
-        placeholderTextColor="#888"
+        placeholderTextColor={Colors.inkMuted}
         keyboardType="decimal-pad"
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>CATEGORY</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipRow}
       >
         {CATEGORIES.map((c) => (
-          <TouchableOpacity
+          <Chip
             key={c}
-            style={[styles.chip, category === c && styles.chipSelected]}
+            label={categoryLabel(c)}
+            selected={category === c}
             onPress={() => setCategory(c)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                category === c && styles.chipTextSelected,
-              ]}
-            >
-              {categoryLabel(c)}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
 
-      <Text style={styles.label}>Description</Text>
+      <Text style={styles.label}>DESCRIPTION</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={description}
         onChangeText={setDescription}
         placeholder="Condition, details, why it's great..."
-        placeholderTextColor="#888"
+        placeholderTextColor={Colors.inkMuted}
         multiline
         numberOfLines={4}
       />
 
-      <TouchableOpacity
-        style={[styles.submitButton, isSubmitting && styles.submitDisabled]}
+      <RetroButton
+        label={submitLabel}
         onPress={handleSubmit}
         disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitText}>{submitLabel}</Text>
-        )}
-      </TouchableOpacity>
+        loading={isSubmitting}
+        style={styles.submitButton}
+      />
     </View>
   );
 }
@@ -217,10 +206,11 @@ const styles = StyleSheet.create({
   imagePicker: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 8,
     overflow: "hidden",
     marginBottom: 20,
-    backgroundColor: Colors.dark.background,
+    backgroundColor: Colors.card,
+    borderWidth: 2,
+    borderColor: Colors.ink,
   },
   imagePreview: {
     width: "100%",
@@ -241,21 +231,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#fff",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: Colors.ink,
     marginBottom: 6,
-    marginTop: 14,
+    marginTop: 16,
   },
   input: {
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
+    backgroundColor: Colors.card,
+    borderWidth: 2,
+    borderColor: Colors.ink,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: "#000",
+    color: Colors.ink,
   },
   textArea: {
     height: 100,
@@ -265,37 +255,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 2,
   },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.background,
-  },
-  chipSelected: {
-    backgroundColor: "#333",
-  },
-  chipText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: "#fff",
-  },
   submitButton: {
-    marginTop: 24,
+    marginTop: 26,
     marginBottom: 40,
-    backgroundColor: "#2a7d3f",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+    width: "100%",
   },
 });

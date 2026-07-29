@@ -89,29 +89,43 @@ Goal: make the cork board navigable.
       builds the query with `.eq`/`.or(...ilike...)`; `hooks/use-listings.ts` reloads from page 0
       whenever either changes.
 
-### M5 — UI cleanup pass
+### M5 — UI cleanup pass  🔍 *in review*
 Goal: come back and fix the visual/UX debt intentionally left rough while M3/M4 were built fast.
-Nothing here blocks functionality — it's a punch list so it doesn't get forgotten.
+Web-focused pass on `feat/ui-cleanup` — **not merged**; the user + Gabe are reviewing the branch
+directly before it lands on `main`. Mobile-specific UI is explicitly out of scope here (separate
+future branch/session).
 
-- [ ] `constants/theme.ts` — only has a `dark` key with light values; misleading naming, no real
-      light/dark theming.
+- [x] `constants/theme.ts` — replaced the misleading single `dark` key with real semantic tokens
+      (`paper`/`card`/`ink`/`inkMuted`/`accent`/`danger`/`border`) used across every screen.
+- [x] Post / My Listings / Edit screens now share the same visual system as the rest of the app
+      (bordered inputs, `RetroButton`, `PencilFont` headings) instead of plain `TextInput`s/
+      `TouchableOpacity`s with no identity.
+- [x] Category picker consolidated: `components/chip.tsx` is now the single chip component used by
+      both `components/listing_form.tsx` and `components/category_filter.tsx` (removes the M4
+      duplication).
+- [x] Home header (greeting + logout) moved into the new `components/top_nav.tsx` instead of living
+      awkwardly inside `app/(tabs)/index.tsx`.
+- [x] Bottom tab bar replaced entirely (per user request, not just reskinned) with a 90s-web-style
+      top nav (`components/top_nav.tsx`) — text links, active-page underline, hand-drawn rule.
+- [x] Listing detail page (`app/listing/[id].tsx`) — layout/typography pass with the new tokens.
+- [x] Corkboard grid decluttered: rotation range narrowed (±30° → ±8°) and the heavy opaque
+      drop-shadow softened (`Colors.CARD_SHADOW`).
+- [x] **Two login designs built side-by-side for comparison** (`components/login_variants/`):
+      `paper_login`/`paper_verify` (polishes the original paper/scribble concept, and finishes the
+      tear-in-half reveal that `login_background_torn.png` was always meant for — see
+      `components/tear_reveal.tsx`) vs. `retro_login`/`retro_verify` (simpler bordered "classic web
+      form" look, no paper texture or animation). A temporary toggle on the login screen switches
+      between them each render — **pick one and delete the loser + the toggle** before this merges.
 - [ ] Consolidate the duplicated thumbtack randomization logic (`REGULAR_THUMBTACKS`,
-      `SPECIAL_THUMBTACKS`, `getRandomThumbtack`) out of `components/listing.tsx` and
-      `components/logo.tsx` into a shared module.
-- [ ] Post / My Listings / Edit screens (M3) were built with plain `TextInput`s and
-      `TouchableOpacity` chips, no cork-board/thumbtack styling, no custom fonts — bring them in
-      line with the login screen's visual identity (`SvgBorder`, `PencilFont`, erase transitions).
-- [ ] Category picker is a bare row of text chips — needs real design treatment. The chip styling
-      is now duplicated across `components/listing_form.tsx` and `components/category_filter.tsx`
-      (M4); consolidate into one shared chip component during the design pass.
-- [ ] `app/(tabs)/index.tsx` home header (`firstNameFromEmail` greeting, logout button) is
-      placeholder-styled — revisit copy + layout.
-- [ ] Bottom tab bar has no icons, just text titles, once there are 3+ tabs (Home/Post/My Listings)
-      it needs a real icon set.
-- [ ] Listing detail page (`app/listing/[id].tsx`) layout/typography pass.
-- [ ] General empty/error/loading state styling across screens (currently plain centered text).
+      `SPECIAL_THUMBTACKS`, `getRandomThumbtack`) — still only in `components/listing.tsx`;
+      `components/logo.tsx` doesn't currently exist in the tree, so there's nothing to consolidate
+      with yet.
+- [ ] General empty/error/loading state styling is now token-consistent but still plain centered
+      text everywhere — could go further (illustrations, retry buttons) if desired.
 - [ ] Search bar (`components/search_bar.tsx`) placeholder copy ("jawns") — confirm tone before
       launch.
+- [ ] Mobile (iOS/Android) pass: confirm the new tokens/components/top nav/tear reveal all look and
+      behave correctly on native, not just web — separate branch/session per the user.
 
 ### Post-MVP (deferred)
 - In-app messaging / contact seller.

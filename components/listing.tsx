@@ -1,7 +1,12 @@
 import { Pressable, Text, Image, StyleSheet, View } from "react-native";
 import { useMemo } from "react";
-import { Colors } from "@/constants/theme";
+import { Colors, CARD_SHADOW } from "@/constants/theme";
 import { formatPrice, type ListingRecord } from "@/utils/listings";
+
+// Tuned to feel hand-pinned without looking chaotic — a wide rotation range
+// and heavy opaque shadows were the biggest source of "looks cluttered"
+// feedback on the original grid.
+const MAX_ROTATION_DEG = 8;
 
 // Regular thumbtack images
 const REGULAR_THUMBTACKS = [
@@ -92,7 +97,7 @@ export function Listing({ item, width, onPress }: ListingProps) {
   // Random rotation + thumbtack, stable per card instance.
   const { rotation, thumbtackImage } = useMemo(() => {
     return {
-      rotation: Math.random() * 60 - 30, // between -30 and 30 degrees
+      rotation: Math.random() * MAX_ROTATION_DEG * 2 - MAX_ROTATION_DEG,
       thumbtackImage: getRandomThumbtack(),
     };
   }, []);
@@ -149,16 +154,16 @@ const styles = StyleSheet.create({
     left: "50%",
     zIndex: 10,
     resizeMode: "contain",
-    filter: "drop-shadow(2px 6px 6px #212121ff)",
+    filter: `drop-shadow(${CARD_SHADOW})`,
   },
   itemContainer: {
     width: "100%",
-    backgroundColor: Colors.dark.background,
+    backgroundColor: Colors.card,
     aspectRatio: 186 / 234,
     padding: 10,
     paddingTop: 12,
     borderRadius: 5,
-    filter: "drop-shadow(2px 6px 6px #212121ff)",
+    filter: `drop-shadow(${CARD_SHADOW})`,
   },
   imageContainer: {
     flex: 1,
@@ -172,14 +177,14 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   itemPrice: {
-    color: Colors.dark.text,
+    color: Colors.ink,
     textAlign: "left",
     fontWeight: "bold",
     paddingLeft: 2,
     paddingTop: 5,
   },
   itemTitle: {
-    color: Colors.dark.text,
+    color: Colors.inkMuted,
     textAlign: "left",
     paddingLeft: 2,
     paddingTop: 5,

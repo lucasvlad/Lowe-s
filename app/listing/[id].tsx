@@ -16,7 +16,7 @@ import {
   formatPrice,
   type ListingWithSeller,
 } from "@/utils/listings";
-import { Colors } from "@/constants/theme";
+import { Colors, CARD_SHADOW, PENCIL_FONT } from "@/constants/theme";
 
 const FALLBACK_IMAGE = require("../../assets/images/favicon.png");
 
@@ -115,15 +115,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginLeft: 12,
     marginBottom: 4,
-    backgroundColor: "#ffffffcc",
-    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: Colors.ink,
+    backgroundColor: Colors.card,
     paddingVertical: 6,
     paddingHorizontal: 14,
   },
   backText: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#333",
+    color: Colors.ink,
   },
   center: {
     flex: 1,
@@ -146,45 +147,43 @@ const styles = StyleSheet.create({
   card: {
     width: "100%",
     maxWidth: 520,
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
+    backgroundColor: Colors.card,
     padding: 16,
-    boxShadow: "2px 6px 10px #21212188",
+    filter: `drop-shadow(${CARD_SHADOW})`,
   },
   image: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 6,
     marginBottom: 14,
     resizeMode: "cover",
   },
   price: {
     fontSize: 26,
     fontWeight: "800",
-    color: Colors.dark.text,
+    color: Colors.ink,
   },
   title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: Colors.dark.text,
+    fontSize: 22,
+    color: Colors.ink,
     marginTop: 4,
+    fontFamily: PENCIL_FONT,
   },
   category: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.inkMuted,
     textTransform: "capitalize",
     marginTop: 8,
   },
   description: {
     fontSize: 15,
     lineHeight: 22,
-    color: "#222",
+    color: Colors.ink,
     marginTop: 14,
   },
   seller: {
     fontSize: 14,
-    color: "#555",
+    color: Colors.inkMuted,
     marginTop: 18,
   },
 });

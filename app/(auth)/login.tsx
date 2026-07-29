@@ -1,34 +1,16 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  useAuth,
-  isAllowedEmail,
-  ALLOWED_EMAIL_DOMAIN,
-} from "@/contexts/AuthContext";
-import { useFonts } from "expo-font";
-import { SvgBorder } from "@/components/login_field_border";
-import { EraseTransition } from "@/components/erase_transition";
-import { alertMessage } from "@/utils/alert";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDesignVariant } from "@/contexts/DesignVariantContext";
+import { PaperLogin } from "@/components/login_variants/paper_login";
+import { RetroLogin } from "@/components/login_variants/retro_login";
+import { Colors } from "@/constants/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
-  const [erasing, setErasing] = useState(false);
   const { requestCode, isLoading } = useAuth();
-
-  const [fontsLoaded] = useFonts({
-    PencilFont: require("../../assets/fonts/pencil_type_beat.ttf"),
-  });
+  const { variant, setVariant } = useDesignVariant();
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -41,174 +23,78 @@ export default function LoginScreen() {
     }
   }, []);
 
-  if (!fontsLoaded) return null;
-
-  const handleLogin = async () => {
-    if (!email.trim()) {
-      alertMessage("Error", "Please enter your email");
-      return;
-    }
-    if (!isAllowedEmail(email)) {
-      alertMessage(
-        "Covenant email required",
-        `Please sign in with your @${ALLOWED_EMAIL_DOMAIN} email address.`,
-      );
-      return;
-    }
-    setErasing(true);
-    // requestCode fires once the erase animation finishes (via onComplete)
-  };
+  const variantProps = { email, setEmail, isLoading, onRequestCode: requestCode };
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/login_background.png")}
-      style={styles.backgroundImage}
-      resizeMode="cover"
-    >
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardView}
-        >
-          {/* EraseTransition wraps ONLY the content, not the background */}
-          <EraseTransition
-            mode="erase"
-            running={erasing}
-            backgroundColor="#e8dcc8" // match your login_background.png colour
-            onComplete={async () => {
-              try {
-                await requestCode(email);
-              } catch (err) {
-                setErasing(false);
-                alertMessage(
-                  "Couldn't send code",
-                  err instanceof Error
-                    ? err.message
-                    : "Something went wrong, please try again.",
-                );
-              }
-            }}
+    <View style={styles.container}>
+      {variant === "paper" ? (
+        <PaperLogin {...variantProps} />
+      ) : (
+        <RetroLogin {...variantProps} />
+      )}
+
+      {/* Temporary A/B toggle so the two login designs can be compared before one is picked. */}
+      <SafeAreaView style={styles.toggleSafeArea} edges={["top", "right"]} pointerEvents="box-none">
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[styles.toggleButton, variant === "paper" && styles.toggleButtonActive]}
+            onPress={() => setVariant("paper")}
           >
-            <Text style={styles.title}>Welcome To</Text>
-            <Text style={styles.subtitle}>Lowe{"`"}s</Text>
-            <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email</Text>
-                <SvgBorder style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your Covenant email"
-                    placeholderTextColor="#000"
-                    value={email}
-                    onChangeText={setEmail}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    editable={!isLoading && !erasing}
-                    selectionColor="#000"
-                  />
-                </SvgBorder>
-              </View>
-              <SvgBorder style={styles.buttonWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.button,
-                    (isLoading || erasing) && styles.buttonDisabled,
-                  ]}
-                  onPress={handleLogin}
-                  disabled={isLoading || erasing}
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#000" />
-                  ) : (
-                    <Text style={styles.buttonText}>Sign In</Text>
-                  )}
-                </TouchableOpacity>
-              </SvgBorder>
-            </View>
-          </EraseTransition>
-        </KeyboardAvoidingView>
+            <Text
+              style={[styles.toggleText, variant === "paper" && styles.toggleTextActive]}
+            >
+              Paper
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, variant === "retro" && styles.toggleButtonActive]}
+            onPress={() => setVariant("retro")}
+          >
+            <Text
+              style={[styles.toggleText, variant === "retro" && styles.toggleTextActive]}
+            >
+              Retro
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backgroundImage: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
   container: {
     flex: 1,
   },
-  keyboardView: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 20,
+  toggleSafeArea: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: "flex-end",
   },
-  formContainer: {
-    padding: 30,
-    maxWidth: 400,
-    alignSelf: "center",
-    width: "100%",
-  },
-  title: {
-    fontSize: 52,
-    color: "#000",
-    marginBottom: 8,
-    textAlign: "center",
-    fontFamily: "PencilFont",
-  },
-  subtitle: {
-    fontSize: 64,
-    color: "#000",
-    marginBottom: 30,
-    textAlign: "center",
-    fontFamily: "PencilFont",
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 26,
-    color: "#000",
-    marginBottom: 4,
-    fontFamily: "PencilFont",
-    paddingLeft: 15,
-  },
-  inputWrapper: {
-    height: 58,
-  },
-  input: {
-    flex: 1,
-    fontSize: 20,
-    color: "#000",
-    paddingHorizontal: 0,
-    fontFamily: "PencilFont",
-  },
-  buttonWrapper: {
-    marginTop: 10,
-    height: 58,
-    maxWidth: 150,
-    alignSelf: "center",
-    width: "100%",
-  },
-  button: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: "#000",
-    fontSize: 24,
-    fontFamily: "PencilFont",
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  signupContainer: {
+  toggleRow: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 20,
+    gap: 6,
+    backgroundColor: "#00000055",
+    borderRadius: 20,
+    padding: 4,
+    margin: 12,
+  },
+  toggleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  toggleButtonActive: {
+    backgroundColor: "#fff",
+  },
+  toggleText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  toggleTextActive: {
+    color: Colors.ink,
   },
 });
