@@ -9,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +16,7 @@ import { useFonts } from "expo-font";
 import { SvgBorder } from "@/components/login_field_border";
 import { ScribbleLine } from "@/components/scribble_line";
 import { EraseTransition } from "@/components/erase_transition";
+import { alertMessage } from "@/utils/alert";
 
 const CODE_LENGTH = 6;
 
@@ -77,13 +77,13 @@ export default function VerifyScreen() {
   const handleVerify = async () => {
     const code = digits.join("");
     if (code.length < CODE_LENGTH) {
-      Alert.alert("Error", "Please enter the full 6-digit code");
+      alertMessage("Error", "Please enter the full 6-digit code");
       return;
     }
     try {
       await verifyCode(code);
     } catch {
-      Alert.alert("Invalid Code", "That code didn't work, please try again");
+      alertMessage("Invalid Code", "That code didn't work, please try again");
       setDigits(Array(CODE_LENGTH).fill(""));
       inputRefs.current[0]?.focus();
     }

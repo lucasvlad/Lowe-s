@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   fetchListingsPage,
   LISTINGS_PAGE_SIZE,
@@ -38,11 +39,24 @@ export function useListings(): UseListingsResult {
     }
   }, []);
 
-  // Initial load.
-  useEffect(() => {
-    setIsLoading(true);
-    loadPage(0, true).finally(() => setIsLoading(false));
-  }, [loadPage]);
+  // Refetch every time the browse screen regains focus (e.g. after posting a
+  // new listing) rather than only once on first mount — tabs stay mounted, so
+  // a plain useEffect would never see listings created after the initial
+  // load. The first focus still shows the full-screen spinner; later ones
+  // refresh quietly behind the existing list.
+  const isFirstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      setHasMore(true);
+      if (isFirstFocus.current) {
+        isFirstFocus.current = false;
+        setIsLoading(true);
+        loadPage(0, true).finally(() => setIsLoading(false));
+      } else {
+        loadPage(0, true);
+      }
+    }, [loadPage]),
+  );
 
   const loadMore = useCallback(() => {
     if (isLoading || isLoadingMore || isRefreshing || !hasMore) return;

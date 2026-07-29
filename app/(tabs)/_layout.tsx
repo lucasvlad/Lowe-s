@@ -27,6 +27,18 @@ export default function TabsLayout() {
           title: "Home",
         }}
       />
+      <Tabs.Screen
+        name="post"
+        options={{
+          title: "Sell",
+        }}
+      />
+      <Tabs.Screen
+        name="my-listings"
+        options={{
+          title: "My Listings",
+        }}
+      />
     </Tabs>
   );
 }

@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
@@ -20,6 +19,7 @@ import {
 import { useFonts } from "expo-font";
 import { SvgBorder } from "@/components/login_field_border";
 import { EraseTransition } from "@/components/erase_transition";
+import { alertMessage } from "@/utils/alert";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -45,11 +45,11 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email.trim()) {
-      Alert.alert("Error", "Please enter your email");
+      alertMessage("Error", "Please enter your email");
       return;
     }
     if (!isAllowedEmail(email)) {
-      Alert.alert(
+      alertMessage(
         "Covenant email required",
         `Please sign in with your @${ALLOWED_EMAIL_DOMAIN} email address.`,
       );
@@ -80,7 +80,7 @@ export default function LoginScreen() {
                 await requestCode(email);
               } catch (err) {
                 setErasing(false);
-                Alert.alert(
+                alertMessage(
                   "Couldn't send code",
                   err instanceof Error
                     ? err.message
