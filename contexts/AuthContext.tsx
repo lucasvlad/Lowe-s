@@ -20,6 +20,9 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   pendingEmail: string | null;
+  /** True only for the one-time cold-start session restore — gates the full-screen loading view. */
+  isInitializing: boolean;
+  /** True while a specific auth action (request/verify/sign out) is in flight — for inline button spinners. */
   isLoading: boolean;
   isAuthenticated: boolean;
   requestCode: (email: string) => Promise<void>;
@@ -37,7 +40,8 @@ function toUser(session: Session | null): User | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { markJustSignedIn } = useDesignVariant();
 
   useEffect(() => {
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data }) => setUser(toUser(data.session)))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsInitializing(false));
 
     // Stay in sync with sign-in / sign-out / token refresh.
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -110,6 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     pendingEmail,
+    isInitializing,
     isLoading,
     isAuthenticated: !!user,
     requestCode,

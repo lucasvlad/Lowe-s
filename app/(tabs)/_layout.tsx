@@ -5,10 +5,12 @@ import { TopNav } from "@/components/top_nav";
 import { Colors } from "@/constants/theme";
 
 export default function TabsLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
 
-  // Show loading spinner while checking auth
-  if (isLoading) {
+  // Only the one-time cold-start session check gates the whole tab area —
+  // isLoading (e.g. mid sign-out) must NOT, or it'd flash this over the
+  // current screen for the brief moment before the redirect fires.
+  if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.accent} />

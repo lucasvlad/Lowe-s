@@ -111,7 +111,8 @@ export default function HomeScreen() {
         </SafeAreaView>
       </ImageBackground>
       <TearReveal
-        running={variant === "paper" && justSignedIn}
+        active={variant === "paper" && justSignedIn}
+        ready={!isLoading}
         onComplete={clearJustSignedIn}
       />
     </SafeAreaProvider>
