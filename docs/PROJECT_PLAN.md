@@ -24,34 +24,35 @@ A Covenant student can: sign in with their `@covenant.edu` email via a one-time 
 
 ## Milestones
 
-### M1 — Finish & merge Auth  ← *current focus*
+### M1 — Finish & merge Auth  ✅
 Goal: a real, working `@covenant.edu`-restricted email OTP login merged to `main`.
 
-- [ ] **Clean up the `auth` branch git history** — remove committed `node_modules`, confirm
-      `.gitignore` covers it. (See scope doc §4.)
-- [ ] **Reconcile the home screen** — auth branch moved it to `app/(tabs)/index.tsx`; port
-      `main`'s cork-board home (logo, search bar, listing grid) into the `(tabs)` structure.
-- [ ] **Set up the Supabase project** — create project, get URL + anon key, store as env vars
-      (via `app.config` / `expo-constants`), replace the placeholders in `utils/supabase.ts`.
-- [ ] **Wire real OTP auth** — replace the mocked `requestCode`/`verifyCode` in `AuthContext`
-      with `supabase.auth.signInWithOtp` + `verifyOtp`.
-- [ ] **Enforce `@covenant.edu`** — client-side validation in `login.tsx` **and** server-side
-      (Supabase auth hook / allowed-domain check) so it can't be bypassed.
-- [ ] **Verify the navigation guard** — unauthenticated → `(auth)/login`; authenticated → `(tabs)`;
-      session restored from SecureStore on cold start; sign-out works.
-- [ ] Merge `auth` → `main`.
+**Status: ✅ complete (merged).**
 
-### M2 — Listings data layer (Browse)
+- [x] **Clean up committed `node_modules`** — turned out to be tracked since the initial commit
+      (~41k files), not just on the auth branch; untracked and `.gitignore` covers it.
+- [x] **Reconcile the home screen** — cork-board home now lives at `app/(tabs)/index.tsx`.
+- [x] **Set up the Supabase project** — URL + publishable key via gitignored `.env`
+      (`EXPO_PUBLIC_*`), read in `utils/supabase.ts`.
+- [x] **Wire real OTP auth** — `signInWithOtp` + `verifyOtp`, session via `onAuthStateChange`.
+- [x] **Enforce `@covenant.edu`** — client-side in `login.tsx`/`AuthContext`; server-side trigger
+      SQL documented in `docs/AUTH_SETUP.md` (applied in Supabase).
+- [x] **Verify the navigation guard** — confirmed by the user (login/signup/logout work).
+- [x] Merged to `main` (PRs #9/#10 area).
+
+### M2 — Listings data layer (Browse)  ← *delivered, pending SQL apply*
 Goal: replace the 500 hardcoded placeholder cards with real data.
 
-- [ ] Create the `listings` table + `profiles` table in Supabase (schema below).
-- [ ] Set up Supabase **Storage** bucket for listing images + RLS policies.
-- [ ] Data access module (`utils/listings.ts` or a hook, e.g. `useListings`) — fetch listings,
-      paginated (the current grid renders 500 at once; use `FlatList`/pagination for real data).
-- [ ] Refactor `components/listing.tsx` to accept real props (`id`, `imageUrl`, `price`, `title`,
-      `onPress`) — the TODO block in that file already sketches this.
-- [ ] **Listing detail page** — `app/(tabs)/listing/[id].tsx`, loads a listing by id.
-- [ ] Loading / empty / error states.
+- [x] Create the `listings` + `profiles` tables — `supabase/migrations/0001_listings_and_profiles.sql`.
+- [x] Supabase **Storage** bucket for listing images + RLS policies (in the same migration).
+- [x] Data access module + hook — `utils/listings.ts` (paginated fetch, `formatPrice`) and
+      `hooks/use-listings.ts` (infinite scroll state).
+- [x] Refactor `components/listing.tsx` to real props (`item`, `width`, `onPress`).
+- [x] **Listing detail page** — `app/listing/[id].tsx` (root-level so it pushes over the tabs).
+- [x] Loading / empty / error states (+ pull-to-refresh).
+
+> **To go live:** run `supabase/migrations/0001_...sql` then `supabase/seed.sql` in the Supabase
+> SQL editor. Until then the browse grid loads empty.
 
 ### M3 — Post a listing (Sell)
 Goal: users can create, edit, and delete their own listings.
