@@ -54,14 +54,26 @@ Goal: replace the 500 hardcoded placeholder cards with real data.
 > **To go live:** run `supabase/migrations/0001_...sql` then `supabase/seed.sql` in the Supabase
 > SQL editor. Until then the browse grid loads empty.
 
-### M3 — Post a listing (Sell)
+### M3 — Post a listing (Sell)  ✅
 Goal: users can create, edit, and delete their own listings.
 
-- [ ] "Post" screen/tab — form: image picker (`expo-image-picker`), title, price, description,
-      category.
-- [ ] Upload image to Supabase Storage; insert row into `listings`.
-- [ ] "My listings" view; edit + delete (RLS: only the owner can mutate).
-- [ ] Basic validation (required fields, price format, image size).
+**Status: ✅ delivered.**
+
+- [x] "Post" screen/tab — form: image picker (`expo-image-picker`), title, price, description,
+      category. `app/(tabs)/post.tsx` + shared `components/listing_form.tsx`.
+- [x] Upload image to Supabase Storage; insert row into `listings` —
+      `uploadListingImage`/`createListing` in `utils/listings.ts`.
+- [x] "My listings" view; edit + delete (RLS: only the owner can mutate) —
+      `app/(tabs)/my-listings.tsx` + `app/listing/[id]/edit.tsx`.
+- [x] Basic validation (required fields, price format, image size) — in `ListingForm` and
+      `uploadListingImage`'s 8MB cap.
+- [x] Fixed `Alert.alert` being a silent no-op on web (`react-native-web`), which was blocking the
+      delete-confirmation dialog and every error alert in the app on web — added
+      `utils/alert.ts` (`alertMessage`/`confirmAction`) with a `window.confirm`/`alert` fallback,
+      and swapped every `Alert.alert` call site to use it.
+- [x] Fixed Home/My Listings not showing newly created or edited listings without a manual
+      refresh — both screens now refetch on tab focus (`useFocusEffect`) instead of only once on
+      mount, since Expo Router keeps tab screens mounted.
 
 ### M4 — Search & Categories
 Goal: make the cork board navigable.
@@ -71,6 +83,28 @@ Goal: make the cork board navigable.
       category filter UI.
 - [ ] Server-side query (Supabase `ilike` / full-text search) rather than client-side filtering
       of a full download.
+
+### M5 — UI cleanup pass
+Goal: come back and fix the visual/UX debt intentionally left rough while M3/M4 were built fast.
+Nothing here blocks functionality — it's a punch list so it doesn't get forgotten.
+
+- [ ] `constants/theme.ts` — only has a `dark` key with light values; misleading naming, no real
+      light/dark theming.
+- [ ] Consolidate the duplicated thumbtack randomization logic (`REGULAR_THUMBTACKS`,
+      `SPECIAL_THUMBTACKS`, `getRandomThumbtack`) out of `components/listing.tsx` and
+      `components/logo.tsx` into a shared module.
+- [ ] Post / My Listings / Edit screens (M3) were built with plain `TextInput`s and
+      `TouchableOpacity` chips, no cork-board/thumbtack styling, no custom fonts — bring them in
+      line with the login screen's visual identity (`SvgBorder`, `PencilFont`, erase transitions).
+- [ ] Category picker is a bare row of text chips — needs real design treatment.
+- [ ] `app/(tabs)/index.tsx` home header (`firstNameFromEmail` greeting, logout button) is
+      placeholder-styled — revisit copy + layout.
+- [ ] Bottom tab bar has no icons, just text titles, once there are 3+ tabs (Home/Post/My Listings)
+      it needs a real icon set.
+- [ ] Listing detail page (`app/listing/[id].tsx`) layout/typography pass.
+- [ ] General empty/error/loading state styling across screens (currently plain centered text).
+- [ ] Search bar (`components/search_bar.tsx`) placeholder copy ("jawns") — confirm tone before
+      launch.
 
 ### Post-MVP (deferred)
 - In-app messaging / contact seller.
