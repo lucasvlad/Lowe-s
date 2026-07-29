@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import {
   fetchListingsPage,
@@ -17,8 +17,15 @@ interface UseListingsResult {
   refresh: () => void;
 }
 
-/** Loads active listings with cursor-free page pagination for infinite scroll. */
-export function useListings(): UseListingsResult {
+/**
+ * Loads active listings with cursor-free page pagination for infinite scroll.
+ * `search`/`category` are applied server-side; changing either reloads from
+ * page 0.
+ */
+export function useListings(
+  search: string = "",
+  category: string | null = null,
+): UseListingsResult {
   const [listings, setListings] = useState<ListingRecord[]>([]);
   const [page, setPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -27,17 +34,20 @@ export function useListings(): UseListingsResult {
   const [error, setError] = useState<Error | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
-  const loadPage = useCallback(async (pageToLoad: number, replace: boolean) => {
-    try {
-      const rows = await fetchListingsPage(pageToLoad);
-      setHasMore(rows.length === LISTINGS_PAGE_SIZE);
-      setListings((prev) => (replace ? rows : [...prev, ...rows]));
-      setPage(pageToLoad);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to load listings"));
-    }
-  }, []);
+  const loadPage = useCallback(
+    async (pageToLoad: number, replace: boolean) => {
+      try {
+        const rows = await fetchListingsPage(pageToLoad, { search, category });
+        setHasMore(rows.length === LISTINGS_PAGE_SIZE);
+        setListings((prev) => (replace ? rows : [...prev, ...rows]));
+        setPage(pageToLoad);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error("Failed to load listings"));
+      }
+    },
+    [search, category],
+  );
 
   // Refetch every time the browse screen regains focus (e.g. after posting a
   // new listing) rather than only once on first mount — tabs stay mounted, so
@@ -57,6 +67,23 @@ export function useListings(): UseListingsResult {
       }
     }, [loadPage]),
   );
+
+  // Reload from page 0 whenever the search/category filter changes while the
+  // screen is already focused — useFocusEffect above only fires on
+  // focus/blur transitions, not on every re-render.
+  const isFirstFilter = useRef(true);
+  useEffect(() => {
+    if (isFirstFilter.current) {
+      isFirstFilter.current = false;
+      return;
+    }
+    setIsLoading(true);
+    setHasMore(true);
+    loadPage(0, true).finally(() => setIsLoading(false));
+    // Reload is keyed on the filter values themselves; loadPage already
+    // captures them and is recreated when they change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, category]);
 
   const loadMore = useCallback(() => {
     if (isLoading || isLoadingMore || isRefreshing || !hasMore) return;

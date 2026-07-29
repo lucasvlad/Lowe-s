@@ -75,14 +75,19 @@ Goal: users can create, edit, and delete their own listings.
       refresh — both screens now refetch on tab focus (`useFocusEffect`) instead of only once on
       mount, since Expo Router keeps tab screens mounted.
 
-### M4 — Search & Categories
+### M4 — Search & Categories  ✅
 Goal: make the cork board navigable.
 
-- [ ] Wire `components/search_bar.tsx` to filter listings by keyword (title/description).
-- [ ] Category taxonomy (e.g. Furniture, Textbooks, Electronics, Clothing, Appliances, Other) +
-      category filter UI.
-- [ ] Server-side query (Supabase `ilike` / full-text search) rather than client-side filtering
-      of a full download.
+**Status: ✅ delivered.**
+
+- [x] Wire `components/search_bar.tsx` to filter listings by keyword (title/description) — now
+      controlled + debounced (300ms), reports up via `onSearch`.
+- [x] Category taxonomy (`constants/categories.ts`, shared with the M3 post/edit form) +
+      category filter UI (`components/category_filter.tsx`, "All" + chips on the home screen).
+- [x] Server-side query (Supabase `ilike` / full-text search) rather than client-side filtering
+      of a full download — `fetchListingsPage` takes an optional `{ search, category }` filter and
+      builds the query with `.eq`/`.or(...ilike...)`; `hooks/use-listings.ts` reloads from page 0
+      whenever either changes.
 
 ### M5 — UI cleanup pass
 Goal: come back and fix the visual/UX debt intentionally left rough while M3/M4 were built fast.
@@ -96,7 +101,9 @@ Nothing here blocks functionality — it's a punch list so it doesn't get forgot
 - [ ] Post / My Listings / Edit screens (M3) were built with plain `TextInput`s and
       `TouchableOpacity` chips, no cork-board/thumbtack styling, no custom fonts — bring them in
       line with the login screen's visual identity (`SvgBorder`, `PencilFont`, erase transitions).
-- [ ] Category picker is a bare row of text chips — needs real design treatment.
+- [ ] Category picker is a bare row of text chips — needs real design treatment. The chip styling
+      is now duplicated across `components/listing_form.tsx` and `components/category_filter.tsx`
+      (M4); consolidate into one shared chip component during the design pass.
 - [ ] `app/(tabs)/index.tsx` home header (`firstNameFromEmail` greeting, logout button) is
       placeholder-styled — revisit copy + layout.
 - [ ] Bottom tab bar has no icons, just text titles, once there are 3+ tabs (Home/Post/My Listings)
