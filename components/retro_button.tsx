@@ -34,19 +34,19 @@ export function RetroButton({
   const textColor = VARIANT_TEXT_COLOR[variant];
 
   return (
-    <SvgBorder style={[styles.wrapper, style]}>
-      <TouchableOpacity
-        style={[styles.button, disabled && styles.disabled]}
-        onPress={onPress}
-        disabled={disabled || loading}
-      >
+    <TouchableOpacity
+      style={[styles.wrapper, style, disabled && styles.disabled]}
+      onPress={onPress}
+      disabled={disabled || loading}
+    >
+      <SvgBorder style={styles.svgBorder}>
         {loading ? (
           <ActivityIndicator color={textColor} />
         ) : (
           <Text style={[styles.label, { color: textColor }]}>{label}</Text>
         )}
-      </TouchableOpacity>
-    </SvgBorder>
+      </SvgBorder>
+    </TouchableOpacity>
   );
 }
 
@@ -54,10 +54,12 @@ const styles = StyleSheet.create({
   wrapper: {
     height: 52,
   },
-  button: {
+  // The TouchableOpacity — not SvgBorder's own inset content area — is the
+  // hit target now, so the whole drawn border is tappable, not just the
+  // label in the middle.
+  svgBorder: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
   },
   disabled: {
     opacity: 0.5,

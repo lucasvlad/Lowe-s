@@ -25,7 +25,9 @@ export function TopNav() {
   return (
     <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
       <View style={styles.bar}>
-        <Text style={styles.brand}>Lowe{"'"}s</Text>
+        <TouchableOpacity onPress={() => router.push("/(tabs)")}>
+          <Text style={styles.brand}>Lowe{"'"}s</Text>
+        </TouchableOpacity>
         <View style={styles.links}>
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.match;
