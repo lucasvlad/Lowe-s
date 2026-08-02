@@ -29,6 +29,7 @@ export default function PostScreen() {
         description: values.description,
         price_cents: values.price_cents,
         category: values.category,
+        contact: values.contact,
         image_url: imageUrl,
       });
 

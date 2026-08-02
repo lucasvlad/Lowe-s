@@ -63,6 +63,7 @@ export default function EditListingScreen() {
         description: values.description,
         price_cents: values.price_cents,
         category: values.category,
+        contact: values.contact,
         ...(imageUrl ? { image_url: imageUrl } : {}),
       });
 
@@ -108,6 +109,7 @@ export default function EditListingScreen() {
                 price_cents: listing.price_cents,
                 category: listing.category,
                 image_url: listing.image_url,
+                contact: listing.contact,
               }}
               submitLabel="Save changes"
               isSubmitting={isSubmitting}
