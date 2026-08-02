@@ -11,7 +11,7 @@ import {
 import { Colors } from "@/constants/theme";
 
 interface TearRevealProps {
-  /** True as soon as the screen should be covered (shows static halves + a spinner). */
+  /** True as soon as the screen should be covered (shows solid paper + a spinner). */
   active: boolean;
   /** True once the content underneath is actually ready — starts the tear-apart animation. */
   ready: boolean;
@@ -24,15 +24,31 @@ const FALLBACK_BUFFER = 800;
 // never arrives (e.g. the listings fetch hangs) — tear anyway after this long.
 const MAX_WAIT_FOR_READY = 6000;
 
+// Each side panel is wider than half the screen so they overlap in the
+// middle at rest — that overlap buries the torn texture's ragged edge under
+// two full layers of paper instead of a single seam, so there's no visible
+// split until the panels actually start moving. Every panel also carries the
+// plain (non-torn) background underneath its torn layer, so if the torn
+// asset has any transparent/ragged bits it never exposes what's behind it —
+// only the panel sliding away does that, which is what makes the reveal
+// grow from the center outward instead of popping in all at once.
+const OVERLAP_PCT = 16;
+const PANEL_WIDTH_PCT = 50 + OVERLAP_PCT / 2;
+const PANEL_IMAGE_WIDTH_PCT = (100 / PANEL_WIDTH_PCT) * 100;
+const RIGHT_PANEL_IMAGE_MARGIN_PCT = -(((100 - PANEL_WIDTH_PCT) / PANEL_WIDTH_PCT) * 100);
+
 /**
- * One-shot overlay: the torn-paper background image covers the screen (with
- * a themed spinner) as soon as `active` flips true, then splits into two
- * halves that slide apart once `ready` is also true, revealing whatever's
- * rendered underneath. Meant to cover a screen's own first mount right after
- * sign-in, not to animate across a navigation transition.
+ * One-shot overlay: two overlapping paper panels (plain background backed,
+ * torn texture on top) cover the screen as soon as `active` flips true, with
+ * a themed spinner. Once `ready` also flips true, both panels slide apart —
+ * since they overlap at rest, the screen underneath is only uncovered where
+ * the panels have actually moved, so the reveal grows outward from the
+ * center in step with the animation rather than showing a gap immediately.
+ * Meant to cover a screen's own first mount right after sign-in, not to
+ * animate across a navigation transition.
  */
 export function TearReveal({ active, ready, onComplete }: TearRevealProps) {
-  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [width, setWidth] = useState(0);
   const [visible, setVisible] = useState(active);
   const [forceReady, setForceReady] = useState(false);
   const [isTearing, setIsTearing] = useState(false);
@@ -41,10 +57,7 @@ export function TearReveal({ active, ready, onComplete }: TearRevealProps) {
   const started = useRef(false);
 
   const onLayout = (e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout;
-    setSize((prev) =>
-      prev.width === width && prev.height === height ? prev : { width, height },
-    );
+    setWidth(e.nativeEvent.layout.width);
   };
 
   useEffect(() => {
@@ -88,12 +101,8 @@ export function TearReveal({ active, ready, onComplete }: TearRevealProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, effectiveReady]);
 
-  const { width, height } = size;
-  if (!visible || width === 0 || height === 0) {
-    return <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none" />;
-  }
+  if (!visible) return null;
 
-  const half = width / 2;
   const leftTranslate = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, -width * 0.7],
@@ -106,38 +115,46 @@ export function TearReveal({ active, ready, onComplete }: TearRevealProps) {
   const rightRotate = progress.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "6deg"] });
 
   return (
-    <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
+    <View style={styles.fill} onLayout={onLayout} pointerEvents="none">
       <Animated.View
         style={[
-          styles.half,
-          {
-            left: 0,
-            width: half,
-            height,
-            transform: [{ translateX: leftTranslate }, { rotate: leftRotate }],
-          },
+          styles.panel,
+          styles.leftPanel,
+          { transform: [{ translateX: leftTranslate }, { rotate: leftRotate }] },
         ]}
       >
         <Image
-          source={require("../assets/images/login_background_torn.png")}
-          style={{ width, height }}
+          source={require("../assets/images/login_background.png")}
+          style={styles.panelImage}
+          resizeMode="cover"
         />
+        <View style={StyleSheet.absoluteFillObject}>
+          <Image
+            source={require("../assets/images/login_background_torn.png")}
+            style={styles.panelImage}
+            resizeMode="cover"
+          />
+        </View>
       </Animated.View>
       <Animated.View
         style={[
-          styles.half,
-          {
-            left: half,
-            width: half,
-            height,
-            transform: [{ translateX: rightTranslate }, { rotate: rightRotate }],
-          },
+          styles.panel,
+          styles.rightPanel,
+          { transform: [{ translateX: rightTranslate }, { rotate: rightRotate }] },
         ]}
       >
         <Image
-          source={require("../assets/images/login_background_torn.png")}
-          style={{ width, height, marginLeft: -half }}
+          source={require("../assets/images/login_background.png")}
+          style={[styles.panelImage, styles.rightPanelImage]}
+          resizeMode="cover"
         />
+        <View style={StyleSheet.absoluteFillObject}>
+          <Image
+            source={require("../assets/images/login_background_torn.png")}
+            style={[styles.panelImage, styles.rightPanelImage]}
+            resizeMode="cover"
+          />
+        </View>
       </Animated.View>
       {!isTearing ? (
         <View style={styles.spinnerWrap}>
@@ -149,10 +166,29 @@ export function TearReveal({ active, ready, onComplete }: TearRevealProps) {
 }
 
 const styles = StyleSheet.create({
-  half: {
+  fill: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.paper,
+  },
+  panel: {
     position: "absolute",
     top: 0,
+    bottom: 0,
+    width: `${PANEL_WIDTH_PCT}%`,
     overflow: "hidden",
+  },
+  leftPanel: {
+    left: 0,
+  },
+  rightPanel: {
+    right: 0,
+  },
+  panelImage: {
+    width: `${PANEL_IMAGE_WIDTH_PCT}%`,
+    height: "100%",
+  },
+  rightPanelImage: {
+    marginLeft: `${RIGHT_PANEL_IMAGE_MARGIN_PCT}%`,
   },
   spinnerWrap: {
     ...StyleSheet.absoluteFillObject,

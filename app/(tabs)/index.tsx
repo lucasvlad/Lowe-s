@@ -10,12 +10,12 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { router } from "expo-router";
 import { SearchBar } from "@/components/search_bar";
 import { CategoryFilter } from "@/components/category_filter";
 import { Listing, getGridLayout } from "@/components/listing";
+import { ListingDetailModal } from "@/components/listing_detail_modal";
 import { TearReveal } from "@/components/tear_reveal";
-import { useDesignVariant } from "@/contexts/DesignVariantContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/use-listings";
 import type { ListingRecord } from "@/utils/listings";
 
@@ -23,7 +23,8 @@ export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const { variant, justSignedIn, clearJustSignedIn } = useDesignVariant();
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const { justSignedIn, clearJustSignedIn } = useAuth();
   const {
     listings,
     isLoading,
@@ -37,13 +38,7 @@ export default function HomeScreen() {
   const { columns, gap, itemWidth } = getGridLayout(screenWidth);
 
   const renderItem = ({ item }: { item: ListingRecord }) => (
-    <Listing
-      item={item}
-      width={itemWidth}
-      onPress={() =>
-        router.push({ pathname: "/listing/[id]", params: { id: item.id } })
-      }
-    />
+    <Listing item={item} width={itemWidth} onPress={() => setSelectedListingId(item.id)} />
   );
 
   const header = (
@@ -110,10 +105,10 @@ export default function HomeScreen() {
           ) : null}
         </SafeAreaView>
       </ImageBackground>
-      <TearReveal
-        active={variant === "paper" && justSignedIn}
-        ready={!isLoading}
-        onComplete={clearJustSignedIn}
+      <TearReveal active={justSignedIn} ready={!isLoading} onComplete={clearJustSignedIn} />
+      <ListingDetailModal
+        listingId={selectedListingId}
+        onClose={() => setSelectedListingId(null)}
       />
     </SafeAreaProvider>
   );

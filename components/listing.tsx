@@ -2,47 +2,10 @@ import { Pressable, Text, Image, StyleSheet, View } from "react-native";
 import { useMemo } from "react";
 import { Colors, CARD_SHADOW } from "@/constants/theme";
 import { formatPrice, type ListingRecord } from "@/utils/listings";
-
-// Tuned to feel hand-pinned without looking chaotic — a wide rotation range
-// and heavy opaque shadows were the biggest source of "looks cluttered"
-// feedback on the original grid.
-const MAX_ROTATION_DEG = 8;
-
-// Regular thumbtack images
-const REGULAR_THUMBTACKS = [
-  require("../assets/images/thumbtacks/blue.png"),
-  require("../assets/images/thumbtacks/green.png"),
-  require("../assets/images/thumbtacks/pink.png"),
-  require("../assets/images/thumbtacks/purple.png"),
-  require("../assets/images/thumbtacks/red.png"),
-  require("../assets/images/thumbtacks/yellow.png"),
-];
-
-// Special rare thumbtacks (1 in 300 chance each)
-const SPECIAL_THUMBTACKS = [
-  require("../assets/images/thumbtacks/rainbow.png"),
-  require("../assets/images/thumbtacks/doge.png"),
-];
+import { getThumbtackForId, getRandomThumbtackRotation } from "@/utils/thumbtacks";
 
 // Shown while a listing has no image (e.g. seed data) or the URL fails.
 const FALLBACK_IMAGE = require("../assets/images/favicon.png");
-
-// Function to select a random thumbtack
-const getRandomThumbtack = () => {
-  const rareChance = Math.random();
-
-  // 1 in 300 chance for random special thumbtacks
-  if (rareChance < 1 / 300) {
-    return SPECIAL_THUMBTACKS[
-      Math.floor(Math.random() * SPECIAL_THUMBTACKS.length)
-    ];
-  }
-
-  // Otherwise, pick a random regular thumbtack
-  return REGULAR_THUMBTACKS[
-    Math.floor(Math.random() * REGULAR_THUMBTACKS.length)
-  ];
-};
 
 const HORIZONTAL_PADDING = 32; // 16px each side; matches the list content padding
 
@@ -94,13 +57,11 @@ interface ListingProps {
 }
 
 export function Listing({ item, width, onPress }: ListingProps) {
-  // Random rotation + thumbtack, stable per card instance.
-  const { rotation, thumbtackImage } = useMemo(() => {
-    return {
-      rotation: Math.random() * MAX_ROTATION_DEG * 2 - MAX_ROTATION_DEG,
-      thumbtackImage: getRandomThumbtack(),
-    };
-  }, []);
+  // Random rotation, stable per card instance; the thumbtack itself is
+  // deterministic per listing id so it matches the one shown in the detail
+  // popup for the same listing.
+  const rotation = useMemo(() => getRandomThumbtackRotation(), []);
+  const thumbtackImage = getThumbtackForId(item.id);
 
   const thumbtackSize = width * 0.25;
   const thumbtackOffset = thumbtackSize * 0.25;
