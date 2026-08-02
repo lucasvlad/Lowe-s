@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { router } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase";
-import { useDesignVariant } from "@/contexts/DesignVariantContext";
 
 /** Only this email domain may sign in (also enforced server-side). */
 export const ALLOWED_EMAIL_DOMAIN = "covenant.edu";
@@ -25,6 +24,9 @@ interface AuthContextType {
   /** True while a specific auth action (request/verify/sign out) is in flight — for inline button spinners. */
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** True for the one render right after a successful sign-in, so Home can play its reveal once. */
+  justSignedIn: boolean;
+  clearJustSignedIn: () => void;
   requestCode: (email: string) => Promise<void>;
   verifyCode: (code: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -42,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const { markJustSignedIn } = useDesignVariant();
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   useEffect(() => {
     // Restore a persisted session on cold start.
@@ -92,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(toUser(data.session));
       setPendingEmail(null);
-      markJustSignedIn();
+      setJustSignedIn(true);
       router.replace("/(tabs)");
     } finally {
       setIsLoading(false);
@@ -117,6 +119,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isInitializing,
     isLoading,
     isAuthenticated: !!user,
+    justSignedIn,
+    clearJustSignedIn: () => setJustSignedIn(false),
     requestCode,
     verifyCode,
     signOut,

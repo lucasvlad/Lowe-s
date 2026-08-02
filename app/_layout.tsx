@@ -5,7 +5,6 @@ import { useFonts } from "expo-font";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import "react-native-reanimated";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { DesignVariantProvider } from "@/contexts/DesignVariantContext";
 import { Colors, PENCIL_FONT } from "@/constants/theme";
 
 // The app's own screens always paint their own (paper/cork) background, but
@@ -65,11 +64,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={AppTheme}>
-      <DesignVariantProvider>
-        <AuthProvider>
-          <NavigationGuard />
-        </AuthProvider>
-      </DesignVariantProvider>
+      <AuthProvider>
+        <NavigationGuard />
+      </AuthProvider>
     </ThemeProvider>
   );
 }

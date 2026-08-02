@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Platform, TextInput } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
-import { useDesignVariant } from "@/contexts/DesignVariantContext";
 import { PaperVerify } from "@/components/login_variants/paper_verify";
-import { RetroVerify } from "@/components/login_variants/retro_verify";
 import { alertMessage } from "@/utils/alert";
 
 const CODE_LENGTH = 6;
@@ -12,7 +10,6 @@ export default function VerifyScreen() {
   const [digits, setDigits] = useState<string[]>(Array(CODE_LENGTH).fill(""));
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const { verifyCode, pendingEmail, isLoading } = useAuth();
-  const { variant } = useDesignVariant();
 
   useEffect(() => {
     if (Platform.OS === "web") {
@@ -80,9 +77,5 @@ export default function VerifyScreen() {
     pendingEmail,
   };
 
-  return variant === "paper" ? (
-    <PaperVerify {...variantProps} />
-  ) : (
-    <RetroVerify {...variantProps} />
-  );
+  return <PaperVerify {...variantProps} />;
 }
