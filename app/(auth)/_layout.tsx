@@ -1,14 +1,18 @@
 import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { Colors } from "@/constants/theme";
 
 export default function AuthLayout() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isInitializing } = useAuth();
 
-  if (isLoading) {
+  // Only the one-time cold-start session check gates the whole screen —
+  // isLoading (per-action, e.g. mid "Sign In" tap) must NOT, or every login/
+  // verify submit would unmount the screen into this spinner mid-flow.
+  if (isInitializing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#0066cc" />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -30,6 +34,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#000",
+    backgroundColor: Colors.paper,
   },
 });

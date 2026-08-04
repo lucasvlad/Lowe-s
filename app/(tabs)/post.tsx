@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ImageBackground, ScrollView, StyleSheet, Text } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { ListingForm, type ListingFormSubmitValues } from "@/components/listing_form";
 import { createListing, uploadListingImage } from "@/utils/listings";
 import { alertMessage } from "@/utils/alert";
+import { Colors, PENCIL_FONT } from "@/constants/theme";
 
 export default function PostScreen() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function PostScreen() {
         description: values.description,
         price_cents: values.price_cents,
         category: values.category,
+        contact: values.contact,
         image_url: imageUrl,
       });
 
@@ -44,12 +46,8 @@ export default function PostScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/cork_board.png")}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+    <View style={styles.background}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.content}>
           <Text style={styles.title}>Post a listing</Text>
           <ListingForm
@@ -60,14 +58,14 @@ export default function PostScreen() {
           />
         </ScrollView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
-    width: "100%",
-    height: "100%",
+    flex: 1,
+    backgroundColor: Colors.paper,
   },
   safeArea: {
     flex: 1,
@@ -76,12 +74,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#fff",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
+    fontSize: 26,
+    color: Colors.ink,
     textAlign: "center",
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 16,
+    fontFamily: PENCIL_FONT,
   },
 });

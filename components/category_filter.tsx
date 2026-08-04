@@ -1,4 +1,5 @@
-import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
+import { Chip } from "@/components/chip";
 import { CATEGORIES, categoryLabel } from "@/constants/categories";
 
 interface CategoryFilterProps {
@@ -14,24 +15,14 @@ export function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
-      <TouchableOpacity
-        style={[styles.chip, selected === null && styles.chipSelected]}
-        onPress={() => onSelect(null)}
-      >
-        <Text style={[styles.chipText, selected === null && styles.chipTextSelected]}>
-          All
-        </Text>
-      </TouchableOpacity>
+      <Chip label="All" selected={selected === null} onPress={() => onSelect(null)} />
       {CATEGORIES.map((c) => (
-        <TouchableOpacity
+        <Chip
           key={c}
-          style={[styles.chip, selected === c && styles.chipSelected]}
+          label={categoryLabel(c)}
+          selected={selected === c}
           onPress={() => onSelect(selected === c ? null : c)}
-        >
-          <Text style={[styles.chipText, selected === c && styles.chipTextSelected]}>
-            {categoryLabel(c)}
-          </Text>
-        </TouchableOpacity>
+        />
       ))}
     </ScrollView>
   );
@@ -41,22 +32,5 @@ const styles = StyleSheet.create({
   row: {
     gap: 8,
     paddingHorizontal: 10,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: "#ffffffcc",
-  },
-  chipSelected: {
-    backgroundColor: "#333",
-  },
-  chipText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: "#fff",
   },
 });

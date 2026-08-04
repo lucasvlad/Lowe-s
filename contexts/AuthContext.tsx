@@ -19,8 +19,14 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   pendingEmail: string | null;
+  /** True only for the one-time cold-start session restore — gates the full-screen loading view. */
+  isInitializing: boolean;
+  /** True while a specific auth action (request/verify/sign out) is in flight — for inline button spinners. */
   isLoading: boolean;
   isAuthenticated: boolean;
+  /** True for the one render right after a successful sign-in, so Home can play its reveal once. */
+  justSignedIn: boolean;
+  clearJustSignedIn: () => void;
   requestCode: (email: string) => Promise<void>;
   verifyCode: (code: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -36,14 +42,16 @@ function toUser(session: Session | null): User | null {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [justSignedIn, setJustSignedIn] = useState(false);
 
   useEffect(() => {
     // Restore a persisted session on cold start.
     supabase.auth
       .getSession()
       .then(({ data }) => setUser(toUser(data.session)))
-      .finally(() => setIsLoading(false));
+      .finally(() => setIsInitializing(false));
 
     // Stay in sync with sign-in / sign-out / token refresh.
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -86,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(toUser(data.session));
       setPendingEmail(null);
+      setJustSignedIn(true);
       router.replace("/(tabs)");
     } finally {
       setIsLoading(false);
@@ -107,8 +116,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     user,
     pendingEmail,
+    isInitializing,
     isLoading,
     isAuthenticated: !!user,
+    justSignedIn,
+    clearJustSignedIn: () => setJustSignedIn(false),
     requestCode,
     verifyCode,
     signOut,

@@ -7,10 +7,11 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Colors } from "@/constants/theme";
+import { Chip } from "@/components/chip";
+import { RetroButton } from "@/components/retro_button";
 import { CATEGORIES, categoryLabel } from "@/constants/categories";
 import { parsePriceToCents } from "@/utils/listings";
 import { alertMessage } from "@/utils/alert";
@@ -20,6 +21,7 @@ export interface ListingFormSubmitValues {
   description: string;
   price_cents: number;
   category: string;
+  contact: string;
   /** Set only when the user picked a new local image that still needs uploading. */
   newImageUri: string | null;
 }
@@ -30,6 +32,7 @@ export interface ListingFormInitialValues {
   price_cents: number;
   category: string | null;
   image_url: string | null;
+  contact: string | null;
 }
 
 interface ListingFormProps {
@@ -40,6 +43,7 @@ interface ListingFormProps {
 }
 
 const FALLBACK_IMAGE = require("../assets/images/favicon.png");
+const TITLE_MAX_LENGTH = 120;
 
 export function ListingForm({
   initialValues,
@@ -57,6 +61,7 @@ export function ListingForm({
   const [category, setCategory] = useState<string | null>(
     initialValues?.category ?? null,
   );
+  const [contact, setContact] = useState(initialValues?.contact ?? "");
   // Local uri once the user picks a new photo; otherwise show the existing remote image.
   const [newImageUri, setNewImageUri] = useState<string | null>(null);
 
@@ -92,8 +97,8 @@ export function ListingForm({
       alertMessage("Title required", "Give your listing a title.");
       return;
     }
-    if (trimmedTitle.length > 120) {
-      alertMessage("Title too long", "Keep the title under 120 characters.");
+    if (trimmedTitle.length > TITLE_MAX_LENGTH) {
+      alertMessage("Title too long", `Keep the title under ${TITLE_MAX_LENGTH} characters.`);
       return;
     }
     const priceCents = parsePriceToCents(price);
@@ -115,12 +120,21 @@ export function ListingForm({
       alertMessage("Photo required", "Add a photo of your item.");
       return;
     }
+    const trimmedContact = contact.trim();
+    if (!trimmedContact) {
+      alertMessage(
+        "Contact info required",
+        "Add an email, phone number, or GroupMe link so buyers can reach you.",
+      );
+      return;
+    }
 
     onSubmit({
       title: trimmedTitle,
       description: trimmedDescription,
       price_cents: priceCents,
       category,
+      contact: trimmedContact,
       newImageUri,
     });
   };
@@ -138,72 +152,75 @@ export function ListingForm({
         </View>
       </TouchableOpacity>
 
-      <Text style={styles.label}>Title</Text>
+      <View style={styles.labelRow}>
+        <Text style={styles.labelInline}>TITLE</Text>
+        <Text style={styles.charCount}>
+          {title.length}/{TITLE_MAX_LENGTH}
+        </Text>
+      </View>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
         placeholder="e.g. Mini fridge"
-        placeholderTextColor="#888"
-        maxLength={120}
+        placeholderTextColor={Colors.inkMuted}
+        maxLength={TITLE_MAX_LENGTH}
       />
 
-      <Text style={styles.label}>Price</Text>
+      <Text style={styles.label}>PRICE</Text>
       <TextInput
         style={styles.input}
         value={price}
         onChangeText={setPrice}
         placeholder="0.00"
-        placeholderTextColor="#888"
+        placeholderTextColor={Colors.inkMuted}
         keyboardType="decimal-pad"
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>CATEGORY</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chipRow}
       >
         {CATEGORIES.map((c) => (
-          <TouchableOpacity
+          <Chip
             key={c}
-            style={[styles.chip, category === c && styles.chipSelected]}
+            label={categoryLabel(c)}
+            selected={category === c}
             onPress={() => setCategory(c)}
-          >
-            <Text
-              style={[
-                styles.chipText,
-                category === c && styles.chipTextSelected,
-              ]}
-            >
-              {categoryLabel(c)}
-            </Text>
-          </TouchableOpacity>
+          />
         ))}
       </ScrollView>
 
-      <Text style={styles.label}>Description</Text>
+      <Text style={styles.label}>DESCRIPTION</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={description}
         onChangeText={setDescription}
         placeholder="Condition, details, why it's great..."
-        placeholderTextColor="#888"
+        placeholderTextColor={Colors.inkMuted}
         multiline
         numberOfLines={4}
       />
 
-      <TouchableOpacity
-        style={[styles.submitButton, isSubmitting && styles.submitDisabled]}
+      <Text style={styles.label}>CONTACT</Text>
+      <TextInput
+        style={styles.input}
+        value={contact}
+        onChangeText={setContact}
+        placeholder="Email, phone number, or GroupMe"
+        placeholderTextColor={Colors.inkMuted}
+        autoCapitalize="none"
+      />
+
+      <RetroButton
+        label={submitLabel}
         onPress={handleSubmit}
         disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitText}>{submitLabel}</Text>
-        )}
-      </TouchableOpacity>
+        loading={isSubmitting}
+        style={styles.submitButton}
+      />
     </View>
   );
 }
@@ -217,10 +234,11 @@ const styles = StyleSheet.create({
   imagePicker: {
     width: "100%",
     aspectRatio: 1,
-    borderRadius: 8,
     overflow: "hidden",
     marginBottom: 20,
-    backgroundColor: Colors.dark.background,
+    backgroundColor: Colors.card,
+    borderWidth: 2,
+    borderColor: Colors.ink,
   },
   imagePreview: {
     width: "100%",
@@ -241,21 +259,39 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#fff",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: Colors.ink,
     marginBottom: 6,
-    marginTop: 14,
+    marginTop: 16,
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  labelInline: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: Colors.ink,
+  },
+  charCount: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: Colors.inkMuted,
   },
   input: {
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
+    backgroundColor: Colors.card,
+    borderWidth: 2,
+    borderColor: Colors.ink,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: "#000",
+    color: Colors.ink,
   },
   textArea: {
     height: 100,
@@ -265,37 +301,9 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 2,
   },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: Colors.dark.background,
-  },
-  chipSelected: {
-    backgroundColor: "#333",
-  },
-  chipText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  chipTextSelected: {
-    color: "#fff",
-  },
   submitButton: {
-    marginTop: 24,
+    marginTop: 26,
     marginBottom: 40,
-    backgroundColor: "#2a7d3f",
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  submitDisabled: {
-    opacity: 0.6,
-  },
-  submitText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
+    width: "100%",
   },
 });

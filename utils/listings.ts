@@ -10,6 +10,7 @@ export interface ListingRecord {
   price_cents: number;
   category: string | null;
   image_url: string | null;
+  contact: string | null;
   status: ListingStatus;
   created_at: string;
 }
@@ -97,6 +98,7 @@ export interface ListingInput {
   price_cents: number;
   category: string;
   image_url: string | null;
+  contact: string;
 }
 
 /** All listings (any status) belonging to `sellerId`, newest first — for "My listings". */

@@ -1,43 +1,11 @@
 import { Pressable, Text, Image, StyleSheet, View } from "react-native";
 import { useMemo } from "react";
-import { Colors } from "@/constants/theme";
+import { Colors, CARD_SHADOW } from "@/constants/theme";
 import { formatPrice, type ListingRecord } from "@/utils/listings";
-
-// Regular thumbtack images
-const REGULAR_THUMBTACKS = [
-  require("../assets/images/thumbtacks/blue.png"),
-  require("../assets/images/thumbtacks/green.png"),
-  require("../assets/images/thumbtacks/pink.png"),
-  require("../assets/images/thumbtacks/purple.png"),
-  require("../assets/images/thumbtacks/red.png"),
-  require("../assets/images/thumbtacks/yellow.png"),
-];
-
-// Special rare thumbtacks (1 in 300 chance each)
-const SPECIAL_THUMBTACKS = [
-  require("../assets/images/thumbtacks/rainbow.png"),
-  require("../assets/images/thumbtacks/doge.png"),
-];
+import { getThumbtackForId, getRandomThumbtackRotation } from "@/utils/thumbtacks";
 
 // Shown while a listing has no image (e.g. seed data) or the URL fails.
 const FALLBACK_IMAGE = require("../assets/images/favicon.png");
-
-// Function to select a random thumbtack
-const getRandomThumbtack = () => {
-  const rareChance = Math.random();
-
-  // 1 in 300 chance for random special thumbtacks
-  if (rareChance < 1 / 300) {
-    return SPECIAL_THUMBTACKS[
-      Math.floor(Math.random() * SPECIAL_THUMBTACKS.length)
-    ];
-  }
-
-  // Otherwise, pick a random regular thumbtack
-  return REGULAR_THUMBTACKS[
-    Math.floor(Math.random() * REGULAR_THUMBTACKS.length)
-  ];
-};
 
 const HORIZONTAL_PADDING = 32; // 16px each side; matches the list content padding
 
@@ -89,13 +57,11 @@ interface ListingProps {
 }
 
 export function Listing({ item, width, onPress }: ListingProps) {
-  // Random rotation + thumbtack, stable per card instance.
-  const { rotation, thumbtackImage } = useMemo(() => {
-    return {
-      rotation: Math.random() * 60 - 30, // between -30 and 30 degrees
-      thumbtackImage: getRandomThumbtack(),
-    };
-  }, []);
+  // Random rotation, stable per card instance; the thumbtack itself is
+  // deterministic per listing id so it matches the one shown in the detail
+  // popup for the same listing.
+  const rotation = useMemo(() => getRandomThumbtackRotation(), []);
+  const thumbtackImage = getThumbtackForId(item.id);
 
   const thumbtackSize = width * 0.25;
   const thumbtackOffset = thumbtackSize * 0.25;
@@ -149,16 +115,16 @@ const styles = StyleSheet.create({
     left: "50%",
     zIndex: 10,
     resizeMode: "contain",
-    filter: "drop-shadow(2px 6px 6px #212121ff)",
+    filter: `drop-shadow(${CARD_SHADOW})`,
   },
   itemContainer: {
     width: "100%",
-    backgroundColor: Colors.dark.background,
+    backgroundColor: Colors.card,
     aspectRatio: 186 / 234,
     padding: 10,
     paddingTop: 12,
     borderRadius: 5,
-    filter: "drop-shadow(2px 6px 6px #212121ff)",
+    filter: `drop-shadow(${CARD_SHADOW})`,
   },
   imageContainer: {
     flex: 1,
@@ -172,14 +138,14 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   itemPrice: {
-    color: Colors.dark.text,
+    color: Colors.ink,
     textAlign: "left",
     fontWeight: "bold",
     paddingLeft: 2,
     paddingTop: 5,
   },
   itemTitle: {
-    color: Colors.dark.text,
+    color: Colors.inkMuted,
     textAlign: "left",
     paddingLeft: 2,
     paddingTop: 5,

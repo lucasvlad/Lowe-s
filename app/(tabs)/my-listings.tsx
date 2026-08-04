@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from "react";
 import {
-  ImageBackground,
   StyleSheet,
   View,
   Text,
@@ -14,7 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { useAuth } from "@/contexts/AuthContext";
-import { Colors } from "@/constants/theme";
+import { Colors, PENCIL_FONT } from "@/constants/theme";
 import {
   deleteListing,
   fetchMyListings,
@@ -99,7 +98,6 @@ export default function MyListingsScreen() {
       </View>
       <View style={styles.rowActions}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.editButton]}
           onPress={() =>
             router.push({
               pathname: "/listing/[id]/edit",
@@ -107,25 +105,18 @@ export default function MyListingsScreen() {
             })
           }
         >
-          <Text style={styles.actionText}>Edit</Text>
+          <Text style={styles.editLink}>Edit</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
-          onPress={() => handleDelete(item)}
-        >
-          <Text style={styles.actionText}>Delete</Text>
+        <TouchableOpacity onPress={() => handleDelete(item)}>
+          <Text style={styles.deleteLink}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <ImageBackground
-      source={require("../../assets/images/cork_board.png")}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+    <View style={styles.background}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <Text style={styles.title}>My listings</Text>
         <FlatList
           data={listings}
@@ -133,11 +124,7 @@ export default function MyListingsScreen() {
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={refresh}
-              tintColor="#fff"
-            />
+            <RefreshControl refreshing={isRefreshing} onRefresh={refresh} />
           }
           ListEmptyComponent={
             isLoading ? null : (
@@ -153,31 +140,29 @@ export default function MyListingsScreen() {
         />
         {isLoading ? (
           <View style={styles.centerOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color="#fff" />
+            <ActivityIndicator size="large" color={Colors.accent} />
           </View>
         ) : null}
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   background: {
-    width: "100%",
-    height: "100%",
+    flex: 1,
+    backgroundColor: Colors.paper,
   },
   safeArea: {
     flex: 1,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#fff",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
+    fontSize: 26,
+    color: Colors.ink,
     textAlign: "center",
-    marginTop: 10,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 16,
+    fontFamily: PENCIL_FONT,
   },
   listContent: {
     paddingHorizontal: 16,
@@ -187,15 +172,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.dark.background,
-    borderRadius: 8,
+    backgroundColor: Colors.card,
+    borderWidth: 2,
+    borderColor: Colors.ink,
     padding: 10,
     gap: 10,
   },
   rowImage: {
     width: 56,
     height: 56,
-    borderRadius: 6,
     resizeMode: "cover",
   },
   rowInfo: {
@@ -204,37 +189,32 @@ const styles = StyleSheet.create({
   rowTitle: {
     fontSize: 15,
     fontWeight: "700",
-    color: "#000",
+    color: Colors.ink,
   },
   rowPrice: {
     fontSize: 14,
-    color: "#333",
+    color: Colors.ink,
     marginTop: 2,
   },
   rowStatus: {
     fontSize: 12,
-    color: "#777",
+    color: Colors.inkMuted,
     marginTop: 2,
     textTransform: "capitalize",
   },
   rowActions: {
-    gap: 6,
+    gap: 8,
+    alignItems: "flex-end",
   },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  editButton: {
-    backgroundColor: "#0066cc",
-  },
-  deleteButton: {
-    backgroundColor: "#cc3333",
-  },
-  actionText: {
-    color: "#fff",
+  editLink: {
+    color: Colors.accent,
     fontWeight: "700",
-    fontSize: 12,
+    fontSize: 13,
+  },
+  deleteLink: {
+    color: Colors.danger,
+    fontWeight: "700",
+    fontSize: 13,
   },
   stateBox: {
     alignItems: "center",
@@ -242,12 +222,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   stateText: {
-    color: "#fff",
+    color: Colors.ink,
     fontSize: 16,
     fontWeight: "600",
     textAlign: "center",
-    textShadowColor: "#00000088",
-    textShadowRadius: 4,
   },
   centerOverlay: {
     ...StyleSheet.absoluteFillObject,

@@ -4,34 +4,27 @@ import {
   StyleSheet,
   View,
   Text,
-  TouchableOpacity,
   FlatList,
   ActivityIndicator,
   RefreshControl,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
-import { router } from "expo-router";
 import { SearchBar } from "@/components/search_bar";
 import { CategoryFilter } from "@/components/category_filter";
 import { Listing, getGridLayout } from "@/components/listing";
+import { ListingDetailModal } from "@/components/listing_detail_modal";
+import { TearReveal } from "@/components/tear_reveal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListings } from "@/hooks/use-listings";
 import type { ListingRecord } from "@/utils/listings";
 
-// Covenant emails are formatted first.last@covenant.edu, so the local part
-// before the first "." is the first name. Capitalize it for the greeting.
-// (Placeholder greeting — revisit when the home header gets its UI pass.)
-function firstNameFromEmail(email?: string): string {
-  const first = email?.split("@")[0]?.split(".")[0] ?? "";
-  return first ? first.charAt(0).toUpperCase() + first.slice(1) : "there";
-}
-
 export default function HomeScreen() {
   const { width: screenWidth } = useWindowDimensions();
-  const { signOut, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const { justSignedIn, clearJustSignedIn } = useAuth();
   const {
     listings,
     isLoading,
@@ -45,25 +38,11 @@ export default function HomeScreen() {
   const { columns, gap, itemWidth } = getGridLayout(screenWidth);
 
   const renderItem = ({ item }: { item: ListingRecord }) => (
-    <Listing
-      item={item}
-      width={itemWidth}
-      onPress={() =>
-        router.push({ pathname: "/listing/[id]", params: { id: item.id } })
-      }
-    />
+    <Listing item={item} width={itemWidth} onPress={() => setSelectedListingId(item.id)} />
   );
 
   const header = (
     <View style={styles.headerArea}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>
-          Welcome, {firstNameFromEmail(user?.email)}
-        </Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <Text style={styles.logoutText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
       <SearchBar onSearch={setSearchQuery} />
       <View style={styles.categoryFilterRow}>
         <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
@@ -80,7 +59,7 @@ export default function HomeScreen() {
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        <SafeAreaView edges={["top", "left", "right"]} style={styles.safeArea}>
+        <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
           <FlatList
             key={`cols-${columns}`}
             style={styles.list}
@@ -126,6 +105,11 @@ export default function HomeScreen() {
           ) : null}
         </SafeAreaView>
       </ImageBackground>
+      <TearReveal active={justSignedIn} ready={!isLoading} onComplete={clearJustSignedIn} />
+      <ListingDetailModal
+        listingId={selectedListingId}
+        onClose={() => setSelectedListingId(null)}
+      />
     </SafeAreaProvider>
   );
 }
@@ -145,7 +129,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 14,
     paddingBottom: 40,
   },
   column: {
@@ -153,36 +137,11 @@ const styles = StyleSheet.create({
   },
   headerArea: {
     alignItems: "center",
-    paddingTop: 10,
-    marginBottom: 30,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    marginBottom: 20,
-    paddingHorizontal: 10,
-  },
-  welcomeText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
+    marginBottom: 24,
   },
   categoryFilterRow: {
     width: "100%",
     marginTop: 14,
-  },
-  logoutButton: {
-    backgroundColor: "#ff3b30",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  logoutText: {
-    color: "#fff",
-    fontWeight: "600",
-    fontSize: 14,
   },
   stateBox: {
     alignItems: "center",
